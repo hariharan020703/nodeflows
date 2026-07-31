@@ -17,7 +17,7 @@ const WHEEL_RADIUS = 310
 // rule is that every path here must exist in public/. Filenames contain spaces, which
 // the Backdrop component URL-encodes, so they can be left exactly as delivered.
 // Currently unused and available: 'Generated image 10/11/12.png'.
-export const DEFAULT_BG = '/Generated image 2.png'
+export const DEFAULT_BG = '/Generated image 10.png'
 
 const DEPARTMENTS_BASE = [
   { key: 'sales', name: 'Sales', sub: 'targeting · outreach · sequencing', color: '#FF9D5C', icon: 'deptSales', bg: '/Generated image 3.png' },
