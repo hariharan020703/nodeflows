@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { DEPARTMENTS, getFan } from './data.js'
 import { svgIcon } from './icons.js'
-import { WHEEL_TREES } from './wheelData.js'
+import { getWheelTree } from './wheelData.js'
 import './SkillTree.css'
 
 // Three states, matching the three captured pages 1:1:
@@ -492,7 +492,8 @@ function wedgePoints(angle, r0, r1, halfWidthDeg) {
 }
 
 function Mini({ dept, onOpen, ringRotation, picked }) {
-  const tree = WHEEL_TREES[dept.key]
+  const deptIndex = DEPARTMENTS.findIndex((d) => d.key === dept.key)
+  const tree = getWheelTree(dept.key, deptIndex, DEPARTMENTS.length)
   const angle = Math.atan2(dept.wy, dept.wx)
   const labelX = Math.cos(angle) * 480
   const labelY = Math.sin(angle) * 480

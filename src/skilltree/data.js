@@ -5,15 +5,30 @@
 // team/job/card content and their fan-node coordinates) is original placeholder content in the
 // same schema, since the captured pages never expanded those departments.
 
-export const DEPARTMENTS = [
-  { key: 'sales', name: 'Sales', sub: 'targeting · outreach · sequencing', color: '#FF9D5C', icon: 'deptSales', wx: 0, wy: 310 },
-  { key: 'deals', name: 'Deals', sub: 'replies · calls · closing · pipeline', color: '#EF4444', icon: 'deptDeals', wx: -242.4, wy: 193.3 },
-  { key: 'marketing', name: 'Marketing', sub: 'content · brand · distribution', color: '#A78BFA', icon: 'deptMarketing', wx: -302.2, wy: -69 },
-  { key: 'operations', name: 'Operations', sub: 'onboarding · builds · client ops', color: '#5EEAD4', icon: 'deptOperations', wx: -134.5, wy: -279.3 },
-  { key: 'intelligence', name: 'Intelligence', sub: 'companies · people · markets', color: '#7DD3FC', icon: 'deptIntelligence', wx: 134.5, wy: -279.3 },
-  { key: 'customer', name: 'Customer', sub: 'support · success · community', color: '#FB7185', icon: 'deptCustomer', wx: 302.2, wy: -69 },
-  { key: 'backoffice', name: 'Back Office', sub: 'money in · books · office · people', color: '#FACC15', icon: 'deptBackOffice', wx: 242.4, wy: 193.3 },
+// Wheel positions are computed from each department's index/count below, rather
+// than hardcoded per-department, so adding/removing a department here is all
+// that's needed to reflow the whole wheel evenly. (Radius matches the original
+// verbatim capture: Sales sat at exactly (0, 310).)
+const WHEEL_RADIUS = 310
+
+const DEPARTMENTS_BASE = [
+  { key: 'sales', name: 'Sales', sub: 'targeting · outreach · sequencing', color: '#FF9D5C', icon: 'deptSales' },
+  { key: 'deals', name: 'Deals', sub: 'replies · calls · closing · pipeline', color: '#EF4444', icon: 'deptDeals' },
+  { key: 'marketing', name: 'Marketing', sub: 'content · brand · distribution', color: '#A78BFA', icon: 'deptMarketing' },
+  { key: 'operations', name: 'Operations', sub: 'onboarding · builds · client ops', color: '#5EEAD4', icon: 'deptOperations' },
+  { key: 'intelligence', name: 'Intelligence', sub: 'companies · people · markets', color: '#7DD3FC', icon: 'deptIntelligence' },
+  { key: 'customer', name: 'Customer', sub: 'support · success · community', color: '#FB7185', icon: 'deptCustomer' },
+  { key: 'backoffice', name: 'Back Office', sub: 'money in · books · office · people', color: '#FACC15', icon: 'deptBackOffice' },
 ]
+
+export const DEPARTMENTS = DEPARTMENTS_BASE.map((d, i, arr) => {
+  const angle = ((90 + (i * 360) / arr.length) * Math.PI) / 180
+  return {
+    ...d,
+    wx: +(Math.cos(angle) * WHEEL_RADIUS).toFixed(1),
+    wy: +(Math.sin(angle) * WHEEL_RADIUS).toFixed(1),
+  }
+})
 
 // --- exact Sales fan, from html2.html / html3.html ---
 const salesNodes = [
@@ -167,8 +182,20 @@ const PLACEHOLDER_TEAMS = {
 const STATUS_CYCLE = ['deployed', 'deployed', 'dev', 'deployed', 'plan']
 const ICON_CYCLE = ['target', 'compass', 'check', 'briefcase', 'mail', 'mega', 'search', 'users', 'gear', 'chart', 'book', 'spark', 'phone', 'video', 'shield', 'clock', 'rocket', 'heart', 'globe', 'doc', 'scale']
 
+// Generic team/job placeholder for any department key added without its own
+// PLACEHOLDER_TEAMS entry, so a new department renders a fan immediately —
+// add a real entry above (keyed by the department's `key`) for tailored copy.
+function defaultTeams(dept) {
+  const n = dept.name
+  return [
+    { name: 'Team A', jobs: [[`${n} Task One`, 'specialist'], [`${n} Task Two`, 'analyst'], [`${n} Task Three`, 'coordinator']] },
+    { name: 'Team B', jobs: [[`${n} Task Four`, 'specialist'], [`${n} Task Five`, 'analyst']] },
+    { name: 'Team C', jobs: [[`${n} Task Six`, 'specialist'], [`${n} Task Seven`, 'analyst'], [`${n} Task Eight`, 'coordinator']] },
+  ]
+}
+
 function buildPlaceholderFan(deptKey, dept) {
-  const teamDefs = PLACEHOLDER_TEAMS[deptKey]
+  const teamDefs = PLACEHOLDER_TEAMS[deptKey] || defaultTeams(dept)
   const nodes = []
   const lines = []
   const teams = []
@@ -219,7 +246,7 @@ function buildPlaceholderFan(deptKey, dept) {
 
 // Stretches every node/line/team-label radially outward from the root by this
 // factor, so edges read as longer without touching their stroke width.
-const LENGTH_SCALE = 2.0
+const LENGTH_SCALE = 1.8
 
 function scaleFan(fan) {
   return {

@@ -81,7 +81,19 @@ export const WHEEL_TREES = {
   },
 }
 
+// Mini-tree lookup for the wheel view. `rotate` is always derived from the
+// department's index/count (same even-step formula as its wheel position in
+// data.js) so the whole ring reflows when a department is added or removed.
+// Departments without a hand-authored branch set (i.e. anything added beyond
+// the original 7) fall back to reusing Sales' branch shape as a generic
+// placeholder mini-tree.
+export function getWheelTree(deptKey, deptIndex, deptCount) {
+  const rotate = (180 + (deptIndex * 360) / deptCount) % 360
+  const explicit = WHEEL_TREES[deptKey]
+  return { rotate, branches: (explicit || WHEEL_TREES.sales).branches }
+}
+
 export function wheelJobCount(deptKey) {
-  const t = WHEEL_TREES[deptKey]
+  const t = WHEEL_TREES[deptKey] || WHEEL_TREES.sales
   return t.branches.reduce((n, b) => n + b.length, 0)
 }
