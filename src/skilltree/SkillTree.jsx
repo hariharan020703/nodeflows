@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { DEPARTMENTS, getFan } from './data.js'
+import { DEFAULT_BG, DEPARTMENTS, getFan } from './data.js'
 import { svgIcon } from './icons.js'
 import { getWheelTree } from './wheelData.js'
 import './SkillTree.css'
@@ -209,6 +209,12 @@ export default function SkillTree() {
     transition: dragging ? 'none' : undefined,
   }
 
+  // While a department is being picked the view is still the wheel, but we switch the
+  // backdrop to the incoming department immediately, so its crossfade runs *under* the
+  // ring spin instead of starting after it — one continuous motion rather than two.
+  const pendingDept = pendingDeptKey ? DEPARTMENTS.find((d) => d.key === pendingDeptKey) : null
+  const activeBg = view === 'fan' ? dept.bg : (pendingDept ? pendingDept.bg : DEFAULT_BG)
+
   return (
     <div
       className={`st-app ${view === 'fan' ? 'fanmode' : ''} ${selected ? 'zoomedin' : ''} ${dragging ? 'dragging' : ''}`}
@@ -217,6 +223,8 @@ export default function SkillTree() {
       onPointerUp={onWorldPointerUp}
       onPointerCancel={onWorldPointerUp}
     >
+      <Backdrop activeBg={activeBg} />
+
       <div id="st-sky">
         <Stars />
       </div>
@@ -290,6 +298,35 @@ export default function SkillTree() {
   )
 }
 
+// Every backdrop that can ever be shown, deduped (DEFAULT_BG may double as a
+// department's image). All layers are mounted at once and switched purely by opacity:
+// that gives an instant, flash-free crossfade, and because a layer at opacity 0 still
+// has its background-image fetched, mounting them *is* the preload — no separate
+// warm-up pass to keep in sync.
+const BG_LAYERS = [...new Set([DEFAULT_BG, ...DEPARTMENTS.map((d) => d.bg)])]
+
+function Backdrop({ activeBg }) {
+  return (
+    <div id="st-backdrop" aria-hidden="true">
+      {BG_LAYERS.map((src) => {
+        // encodeURI, because the delivered filenames contain spaces.
+        const image = `url("${encodeURI(src)}")`
+        return (
+          <div key={src} className={`st-bg-layer ${src === activeBg ? 'on' : ''}`}>
+            {/* The art occupies only the left portion of each source image, so each half
+                of the screen renders that same left portion and the right one is mirrored.
+                That frames both edges symmetrically and leaves the middle — where the hub
+                and labels sit — clear, instead of loading all the art onto one side. */}
+            <div className="st-bg-half st-bg-half-l" style={{ backgroundImage: image }} />
+            <div className="st-bg-half st-bg-half-r" style={{ backgroundImage: image }} />
+          </div>
+        )
+      })}
+      <div className="st-bg-veil" />
+    </div>
+  )
+}
+
 function WheelTopBar() {
   return (
     <div className="st-topbar">
@@ -336,7 +373,9 @@ const STAR_FIELD = (() => {
       left: rnd() * 100,
       top: rnd() * 100,
       size: rnd() < 0.7 ? 1.5 : 2.5,
-      opacity: 0.08 + rnd() * 0.25,
+      // Sky-blue dots on the light canvas need a bit more alpha than the original
+      // ivory-on-near-black stars did to stay visible as background texture.
+      opacity: 0.18 + rnd() * 0.3,
       delay: rnd() * 6,
       duration: 5 + rnd() * 5,
     })
@@ -366,7 +405,7 @@ function Stars() {
 // nearest neighbors, rather than a fixed branch/trunk structure.
 const HUB_CORE = (() => {
   const rnd = mulberry32(1337)
-  const palette = ['#FF9D5C', '#EF4444', '#A78BFA', '#5EEAD4', '#7DD3FC', '#FB7185', '#FACC15']
+  const palette = DEPARTMENTS.map((d) => d.color)
   const dust = []
   for (let i = 0; i < 220; i++) {
     const angle = rnd() * Math.PI * 2
@@ -396,7 +435,7 @@ function HubCore() {
     <svg className="st-hub-svg" viewBox="-122 -122 244 244" width="244" height="244">
       <g className="st-hub-spin">
         {HUB_CORE.links.map((l, i) => (
-          <line key={`l${i}`} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke="rgb(var(--lnrgb))" strokeOpacity="0.14" strokeWidth="0.1" />
+          <line key={`l${i}`} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke="rgb(var(--lnrgb))" strokeOpacity="0.22" strokeWidth="0.1" />
         ))}
         {HUB_CORE.dust.map((d, i) => (
           <circle key={`d${i}`} cx={d.x} cy={d.y} r={d.r} fill={d.color} opacity={d.opacity} />
@@ -425,10 +464,10 @@ function Spokes() {
         const inPath = `M 0 0 L ${d.wx} ${d.wy}`
         const outPath = `M ${d.wx} ${d.wy} L 0 0`
         return (
-          <g key={d.key}>
+          <g key={d.key} style={{ '--c': d.color }}>
             <path d={inPath} className="st-spoke-line" />
             {SPOKE_DOTS.map((dot, di) => (
-              <circle key={di} r={dot.r} fill={dot.fill === 'dept' ? d.color : 'var(--ivory)'} opacity={dot.opacity}>
+              <circle key={di} r={dot.r} fill={dot.fill === 'dept' ? 'var(--c-line)' : 'var(--c-text)'} opacity={dot.opacity}>
                 <animateMotion
                   dur={`${dot.durBase + (i % 5) * 0.3}s`}
                   begin={`${dot.delay + (i % 3) * 0.4}s`}

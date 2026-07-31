@@ -11,14 +11,22 @@
 // verbatim capture: Sales sat at exactly (0, 310).)
 const WHEEL_RADIUS = 310
 
+// Backdrop art, served from public/ (so these are absolute URLs from the site root).
+// `DEFAULT_BG` is what the wheel/overview shows; each department below names its own
+// image via `bg`, and the backdrop crossfades between them. Reassign freely — the only
+// rule is that every path here must exist in public/. Filenames contain spaces, which
+// the Backdrop component URL-encodes, so they can be left exactly as delivered.
+// Currently unused and available: 'Generated image 10/11/12.png'.
+export const DEFAULT_BG = '/Generated image 2.png'
+
 const DEPARTMENTS_BASE = [
-  { key: 'sales', name: 'Sales', sub: 'targeting · outreach · sequencing', color: '#FF9D5C', icon: 'deptSales' },
-  { key: 'deals', name: 'Deals', sub: 'replies · calls · closing · pipeline', color: '#EF4444', icon: 'deptDeals' },
-  { key: 'marketing', name: 'Marketing', sub: 'content · brand · distribution', color: '#A78BFA', icon: 'deptMarketing' },
-  { key: 'operations', name: 'Operations', sub: 'onboarding · builds · client ops', color: '#5EEAD4', icon: 'deptOperations' },
-  { key: 'intelligence', name: 'Intelligence', sub: 'companies · people · markets', color: '#7DD3FC', icon: 'deptIntelligence' },
-  { key: 'customer', name: 'Customer', sub: 'support · success · community', color: '#FB7185', icon: 'deptCustomer' },
-  { key: 'backoffice', name: 'Back Office', sub: 'money in · books · office · people', color: '#FACC15', icon: 'deptBackOffice' },
+  { key: 'sales', name: 'Sales', sub: 'targeting · outreach · sequencing', color: '#FF9D5C', icon: 'deptSales', bg: '/Generated image 3.png' },
+  { key: 'deals', name: 'Deals', sub: 'replies · calls · closing · pipeline', color: '#EF4444', icon: 'deptDeals', bg: '/Generated image 4.png' },
+  { key: 'marketing', name: 'Marketing', sub: 'content · brand · distribution', color: '#A78BFA', icon: 'deptMarketing', bg: '/Generated image 5.png' },
+  { key: 'operations', name: 'Operations', sub: 'onboarding · builds · client ops', color: '#5EEAD4', icon: 'deptOperations', bg: '/Generated image 6.png' },
+  { key: 'intelligence', name: 'Intelligence', sub: 'companies · people · markets', color: '#7DD3FC', icon: 'deptIntelligence', bg: '/Generated image 7.png' },
+  { key: 'customer', name: 'Customer', sub: 'support · success · community', color: '#FB7185', icon: 'deptCustomer', bg: '/Generated image 8.png' },
+  { key: 'backoffice', name: 'Back Office', sub: 'money in · books · office · people', color: '#FACC15', icon: 'deptBackOffice', bg: '/Generated image 9.png' },
 ]
 
 export const DEPARTMENTS = DEPARTMENTS_BASE.map((d, i, arr) => {
