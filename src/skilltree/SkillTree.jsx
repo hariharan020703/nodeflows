@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { DEFAULT_BG, DEPARTMENTS, getFan } from './data.js'
+import { DEFAULT_BG, DEPARTMENTS, WHEEL_RADIUS, getFan } from './data.js'
 import { svgIcon } from './icons.js'
-import { getWheelTree } from './wheelData.js'
+import { WHEEL_LABEL_OFFSET, getWheelTree } from './wheelData.js'
 import './SkillTree.css'
 
 // Three states, matching the three captured pages 1:1:
@@ -12,6 +12,40 @@ const ZOOM_MIN = 0.4
 const ZOOM_MAX = 3
 const ZOOM_STEP = 0.2
 const DEPT_STEP = 360 / DEPARTMENTS.length
+
+// Diameter of a department's main badge circle. Lives here rather than in CSS because the
+// hover wedge's apex has to start just outside it — as a bare number in the CSS the two would
+// drift apart and the wedge would end up buried inside the badge.
+const DEPT_BADGE_SIZE = 144
+
+// Vertical framing for the wheel. The usable band runs from under the top bar down to the
+// rotate chevrons at bottom 8.5%, and the hub is centred in that band. Left at the CSS 56%
+// anchor the entire upper half of the screen went unused and the wheel had only ~35% of the
+// viewport height to grow into — centring it is where most of the extra size comes from.
+// hubScreenCenter() reads the same figure; if the two disagree, drag-rotation pivots around
+// the wrong point.
+const TOPBAR_H = 110
+const CHEVRON_TOP = 0.915
+
+function wheelBand(h) {
+  const bottom = h * CHEVRON_TOP
+  return { centre: (TOPBAR_H + bottom) / 2, room: (bottom - TOPBAR_H) / 2 }
+}
+
+// World radius the wheel must fit, out through the badge ring and branch tips to the name
+// label. Vertically the labels overhang their anchor by about half a name block; horizontally
+// by the widest sub-label's half-width — without that second term the left/right department
+// names get clipped off the edge of a narrow window.
+const LABEL_HALF_H = 66
+const LABEL_HALF_W = 330
+const WHEEL_WORLD_V = WHEEL_RADIUS + WHEEL_LABEL_OFFSET + LABEL_HALF_H
+const WHEEL_WORLD_H = WHEEL_RADIUS + WHEEL_LABEL_OFFSET + LABEL_HALF_W
+
+function fitWheelScale(w, h) {
+  const fit = Math.min(wheelBand(h).room / WHEEL_WORLD_V, (w * 0.5 - 16) / WHEEL_WORLD_H)
+  // Floor low enough that a small window fits the whole wheel rather than clipping it.
+  return Math.max(0.2, Math.min(0.62, fit))
+}
 
 function normalizeDelta(delta) {
   // Keep an angle delta in (-180, 180] so drag rotation never jumps when the
@@ -39,6 +73,17 @@ export default function SkillTree() {
   const slideTimerRef = useRef(null)
   const revealTimerRef = useRef(null)
 
+  const [viewport, setViewport] = useState(() => ({ w: window.innerWidth, h: window.innerHeight }))
+
+  useEffect(() => {
+    const onResize = () => setViewport({ w: window.innerWidth, h: window.innerHeight })
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+
+  const wheelScale = fitWheelScale(viewport.w, viewport.h)
+  const wheelHubY = wheelBand(viewport.h).centre
+
   useEffect(() => () => {
     clearTimeout(enterTimerRef.current)
     clearTimeout(slideTimerRef.current)
@@ -59,7 +104,9 @@ export default function SkillTree() {
   // (fixed, full-viewport) app root, so that's the on-screen center to rotate the drag
   // angle around.
   function hubScreenCenter() {
-    return { x: window.innerWidth * 0.5, y: window.innerHeight * 0.56 }
+    // Must match where the wheel's ty actually puts the hub, not #st-world's CSS anchor —
+    // a mismatch shows up as drag-rotation pivoting around the wrong point.
+    return { x: viewport.w * 0.5, y: wheelHubY }
   }
 
   function onWorldPointerDown(e) {
@@ -191,8 +238,10 @@ export default function SkillTree() {
   let tx, ty, baseScale
   if (view === 'wheel') {
     tx = 0
-    ty = -29.2
-    baseScale = 0.3415
+    // #st-world is anchored at top: 56%, so this is the shift that lands the hub on
+    // wheelHubY, the centre of the usable band.
+    ty = wheelHubY - viewport.h * 0.56
+    baseScale = wheelScale
   } else if (!selected) {
     tx = 0
     ty = 159.3
@@ -327,10 +376,18 @@ function Backdrop({ activeBg }) {
   )
 }
 
+// Departments overview only. Deliberately NOT rendered by TopBar below, so it stays off the
+// department-detail view and off the open card.
+// TODO: replace the alt text with the actual brand name.
+function Logo() {
+  return <img className="st-logo" src="/logo.svg" alt="Company logo" />
+}
+
 function WheelTopBar() {
   return (
     <div className="st-topbar">
       <div className="st-tb-left">
+        <Logo />
         <span className="st-tb-title">COMPANY KNOWLEDGE BASE</span>
       </div>
       <div className="st-tb-tabs">
@@ -342,6 +399,8 @@ function WheelTopBar() {
   )
 }
 
+// Department-detail (fan) view — rendered whenever view === 'fan', which is also the only
+// state in which the card can be open. No <Logo /> here, by design.
 function TopBar({ onBack }) {
   return (
     <div className="st-topbar">
@@ -403,27 +462,36 @@ function Stars() {
 
 // Neural-network-style particle mesh: a dense cloud of dots, each linked to its 1-2
 // nearest neighbors, rather than a fixed branch/trunk structure.
+// Globe-like core: a dense speckle of fine dots, each wired to its nearest neighbours so the
+// whole thing reads as one connected mesh rather than loose confetti. HUB_CORE_R is the
+// particle radius in world units; .st-hub-core's box is sized from it.
+export const HUB_CORE_R = 168
+const HUB_DOTS = 820
+
 const HUB_CORE = (() => {
   const rnd = mulberry32(1337)
   const palette = DEPARTMENTS.map((d) => d.color)
   const dust = []
-  for (let i = 0; i < 220; i++) {
+  for (let i = 0; i < HUB_DOTS; i++) {
     const angle = rnd() * Math.PI * 2
-    const dist = Math.sqrt(rnd()) * 112
-    const color = rnd() < 0.65 ? 'var(--ivory)' : palette[Math.floor(rnd() * palette.length)]
-    dust.push({ x: Math.cos(angle) * dist, y: Math.sin(angle) * dist, r: 0.6 + rnd() * 1.4, color, opacity: 0.25 + rnd() * 0.5 })
+    // sqrt() keeps the areal density even instead of clumping everything at the centre.
+    const dist = Math.sqrt(rnd()) * HUB_CORE_R
+    const color = rnd() < 0.6 ? 'var(--ivory)' : palette[Math.floor(rnd() * palette.length)]
+    dust.push({ x: Math.cos(angle) * dist, y: Math.sin(angle) * dist, r: 0.5 + rnd() * 1.5, color, opacity: 0.3 + rnd() * 0.55 })
   }
   const links = []
-  const maxDist = 22
+  // Scaled with the radius so the mesh keeps the same visual density as it grows; up to 3
+  // links per dot (was 2) makes the web read as a network rather than short dashes.
+  const maxDist = HUB_CORE_R * 0.13
   dust.forEach((p, i) => {
-    let best = []
+    const best = []
     dust.forEach((q, j) => {
       if (i === j) return
       const d = Math.hypot(p.x - q.x, p.y - q.y)
       if (d < maxDist) best.push({ j, d })
     })
     best.sort((a, b) => a.d - b.d)
-    best.slice(0, 2).forEach(({ j }) => {
+    best.slice(0, 3).forEach(({ j }) => {
       if (j > i) links.push({ x1: p.x, y1: p.y, x2: dust[j].x, y2: dust[j].y })
     })
   })
@@ -432,30 +500,45 @@ const HUB_CORE = (() => {
 
 function HubCore() {
   return (
-    <svg className="st-hub-svg" viewBox="-122 -122 244 244" width="244" height="244">
+    <svg
+      className="st-hub-svg"
+      viewBox={`${-HUB_CORE_R} ${-HUB_CORE_R} ${HUB_CORE_R * 2} ${HUB_CORE_R * 2}`}
+      width={HUB_CORE_R * 2}
+      height={HUB_CORE_R * 2}
+    >
       <g className="st-hub-spin">
         {HUB_CORE.links.map((l, i) => (
-          <line key={`l${i}`} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke="rgb(var(--lnrgb))" strokeOpacity="0.22" strokeWidth="0.1" />
+          // 0.1 rendered at ~0.04px on screen, i.e. invisible — the mesh has to be wide
+          // enough to survive the wheel's scale-down or the dots read as unconnected.
+          <line key={`l${i}`} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke="rgb(var(--lnrgb))" strokeOpacity="0.3" strokeWidth="0.9" />
         ))}
         {HUB_CORE.dust.map((d, i) => (
           <circle key={`d${i}`} cx={d.x} cy={d.y} r={d.r} fill={d.color} opacity={d.opacity} />
         ))}
       </g>
-      <circle className="st-hub-nucleus" cx="0" cy="0" r="4.5" fill="var(--copper)" />
+      <circle className="st-hub-nucleus" cx="0" cy="0" r="7" fill="var(--copper)" />
     </svg>
   )
 }
 
 // Per spoke: a little train of dots flowing between the department and the hub,
 // mixing small/medium/big sizes and both directions instead of just two dots.
-const SPOKE_DOTS = [
-  { r: 3.4, fill: 'dept', opacity: 0.95, dirOut: false, durBase: 3.2, delay: 0 },
-  { r: 1.4, fill: 'ivory', opacity: 0.45, dirOut: true, durBase: 4.1, delay: 0.6 },
-  { r: 2.2, fill: 'dept', opacity: 0.75, dirOut: false, durBase: 3.7, delay: 1.4 },
-  { r: 4.2, fill: 'ivory', opacity: 0.55, dirOut: true, durBase: 5.2, delay: 2.1 },
-  { r: 1.7, fill: 'dept', opacity: 0.6, dirOut: false, durBase: 3.9, delay: 2.9 },
-  { r: 2.8, fill: 'ivory', opacity: 0.4, dirOut: true, durBase: 4.6, delay: 3.6 },
-]
+// Generated rather than hand-listed so the count is one number. Sizes, speeds, directions and
+// start offsets are all staggered by index, giving a continuous two-way traffic of signals
+// along every spoke instead of a few sparse blips.
+const SPOKE_DOT_COUNT = 16
+const SPOKE_DOTS = Array.from({ length: SPOKE_DOT_COUNT }, (_, i) => {
+  const t = i / SPOKE_DOT_COUNT
+  return {
+    r: [1.3, 2.1, 3.0, 4.0, 1.7, 2.6][i % 6],
+    fill: i % 3 === 0 ? 'ivory' : 'dept',
+    opacity: 0.35 + ((i * 7) % 10) / 10 * 0.55,
+    dirOut: i % 2 === 1,
+    durBase: 3.0 + ((i * 5) % 9) * 0.35,
+    // Spread starts across the full travel time so the line is never briefly empty.
+    delay: +(t * 5.2).toFixed(2),
+  }
+})
 
 function Spokes() {
   return (
@@ -534,13 +617,17 @@ function Mini({ dept, onOpen, ringRotation, picked }) {
   const deptIndex = DEPARTMENTS.findIndex((d) => d.key === dept.key)
   const tree = getWheelTree(dept.key, deptIndex, DEPARTMENTS.length)
   const angle = Math.atan2(dept.wy, dept.wx)
-  const labelX = Math.cos(angle) * 480
-  const labelY = Math.sin(angle) * 480
-  const hitPoints = wedgePoints(angle, 45, 580, 34)
+  // Both radii are measured outward from this department's own badge, and both are derived
+  // from WHEEL_LABEL_OFFSET so they keep pace with TREE_SCALE — as hardcoded 480/580 they
+  // would have been swallowed by the branches the moment the trees grew.
+  const labelX = Math.cos(angle) * WHEEL_LABEL_OFFSET
+  const labelY = Math.sin(angle) * WHEEL_LABEL_OFFSET
+  // Apex 8px clear of the badge's own edge, derived so it can't end up inside the circle.
+  const hitPoints = wedgePoints(angle, DEPT_BADGE_SIZE / 2 + 8, WHEEL_LABEL_OFFSET + 100, 34)
   return (
     <button
       className={`st-mini ${picked ? 'st-mini-picked' : ''}`}
-      style={{ left: dept.wx, top: dept.wy, '--c': dept.color }}
+      style={{ left: dept.wx, top: dept.wy, '--c': dept.color, '--badge-size': `${DEPT_BADGE_SIZE}px` }}
       onClick={() => onOpen(dept.key)}
     >
       <svg className="st-mini-hit" style={{ left: 0, top: 0, overflow: 'visible' }}>
@@ -643,93 +730,96 @@ function Card({ node, dept, onClose }) {
   return (
     <div id="st-card" className="open" style={{ '--c': dept.color }}>
       <button className="st-c-x" onClick={onClose} aria-label="close">×</button>
-      <div className="st-c-state">{node.status === 'deployed' ? 'fully autonomous' : node.status === 'dev' ? 'human-assisted' : 'human-led'}</div>
-      <div className="st-c-name">
-        {node.name}
-        {node.tag && <span className="st-c-found">{node.tag}</span>}
-      </div>
-      <div className="st-c-crumb">{c.crumb}</div>
-      <p className="st-c-desc">{c.desc}</p>
-
-      <div className="st-c-section">
-        <div className="st-c-h">BREAKS INTO</div>
-        <div className="st-c-skills">
-          {c.skills.map((s) => (
-            <span key={s} className="st-c-skill">{s}</span>
-          ))}
+      {/* Only this inner wrapper scrolls, so .st-c-x stays pinned to the card corner. */}
+      <div className="st-c-body">
+        <div className="st-c-state">{node.status === 'deployed' ? 'fully autonomous' : node.status === 'dev' ? 'human-assisted' : 'human-led'}</div>
+        <div className="st-c-name">
+          {node.name}
+          {node.tag && <span className="st-c-found">{node.tag}</span>}
         </div>
-      </div>
+        <div className="st-c-crumb">{c.crumb}</div>
+        <p className="st-c-desc">{c.desc}</p>
 
-      <div className="st-c-section">
-        <div className="st-c-h">YOUR STATUS</div>
-        <div className="st-c-my">
-          <span className={node.status === 'plan' ? 'on' : ''}>Not started</span>
-          <span className={node.status === 'dev' ? 'on' : ''}>In development</span>
-          <span className={node.status === 'deployed' ? 'on' : ''}>Live</span>
-        </div>
-      </div>
-
-      <div className="st-c-section">
-        <div className="st-c-h">YOUR NOTES</div>
-        <textarea className="st-c-note" placeholder="Add a note…" />
-      </div>
-
-      <div className="st-c-section">
-        <div className="st-c-h">BUILDS ON</div>
-        <div className="st-c-req">{c.buildsOn}</div>
-      </div>
-
-      <div className="st-c-section">
-        <div className="st-c-h">WHAT IT REPLACES</div>
-        <p className="st-c-replaces">{c.replaces}</p>
-      </div>
-
-      <div className="st-c-section">
-        <div className="st-c-h">THE LADDER</div>
-        <div className="st-ladder">
-          <div className="st-lrow">
-            <span>Human-led</span>
-            <p>{c.ladder.humanLed}</p>
-          </div>
-          <div className={`st-lrow ${node.status === 'dev' ? 'cur' : ''}`}>
-            <span>Human-assisted</span>
-            <p>{c.ladder.humanAssisted}</p>
-          </div>
-          <div className={`st-lrow ${node.status === 'deployed' ? 'cur' : ''}`}>
-            <span>Fully autonomous</span>
-            <p>{c.ladder.fullyAutonomous}</p>
+        <div className="st-c-section">
+          <div className="st-c-h">BREAKS INTO</div>
+          <div className="st-c-skills">
+            {c.skills.map((s) => (
+              <span key={s} className="st-c-skill">{s}</span>
+            ))}
           </div>
         </div>
-      </div>
 
-      <div className="st-c-section">
-        <div className="st-c-h">THE HUMAN</div>
-        <p className="st-c-replaces">{c.human}</p>
-      </div>
-
-      <div className="st-c-section">
-        <div className="st-c-h">BUILD NOTES</div>
-        <p className="st-c-replaces">{c.notes}</p>
-      </div>
-
-      <div className="st-c-section">
-        <div className="st-c-h">THE SKILLS · LOCKED</div>
-        <div className="st-dl st-dl-locked">
-          <div className="st-dl-top">
-            <span>🔒</span>
-            <span className="st-dl-name">{node.skill}</span>
-            <span className="st-dl-tag">LOCKED · TAP TO PREVIEW</span>
+        <div className="st-c-section">
+          <div className="st-c-h">YOUR STATUS</div>
+          <div className="st-c-my">
+            <span className={node.status === 'plan' ? 'on' : ''}>Not started</span>
+            <span className={node.status === 'dev' ? 'on' : ''}>In development</span>
+            <span className={node.status === 'deployed' ? 'on' : ''}>Live</span>
           </div>
-          <p className="st-dld">{c.fileDesc}</p>
-          <code className="st-dl-file">skills/{node.file}</code>
         </div>
-      </div>
 
-      <div className="st-c-cta">
-        <button className="st-skbuy" disabled >Get Access · $49/mo</button>
-        <button className="st-skbook" disabled >Book a call</button>
+        <div className="st-c-section">
+          <div className="st-c-h">YOUR NOTES</div>
+          <textarea className="st-c-note" placeholder="Add a note…" />
+        </div>
+
+        <div className="st-c-section">
+          <div className="st-c-h">BUILDS ON</div>
+          <div className="st-c-req">{c.buildsOn}</div>
+        </div>
+
+        <div className="st-c-section">
+          <div className="st-c-h">WHAT IT REPLACES</div>
+          <p className="st-c-replaces">{c.replaces}</p>
+        </div>
+
+        <div className="st-c-section">
+          <div className="st-c-h">THE LADDER</div>
+          <div className="st-ladder">
+            <div className="st-lrow">
+              <span>Human-led</span>
+              <p>{c.ladder.humanLed}</p>
+            </div>
+            <div className={`st-lrow ${node.status === 'dev' ? 'cur' : ''}`}>
+              <span>Human-assisted</span>
+              <p>{c.ladder.humanAssisted}</p>
+            </div>
+            <div className={`st-lrow ${node.status === 'deployed' ? 'cur' : ''}`}>
+              <span>Fully autonomous</span>
+              <p>{c.ladder.fullyAutonomous}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="st-c-section">
+          <div className="st-c-h">THE HUMAN</div>
+          <p className="st-c-replaces">{c.human}</p>
+        </div>
+
+        <div className="st-c-section">
+          <div className="st-c-h">BUILD NOTES</div>
+          <p className="st-c-replaces">{c.notes}</p>
+        </div>
+
+        <div className="st-c-section">
+          <div className="st-c-h">THE SKILLS · LOCKED</div>
+          <div className="st-dl st-dl-locked">
+            <div className="st-dl-top">
+              <span>🔒</span>
+              <span className="st-dl-name">{node.skill}</span>
+              <span className="st-dl-tag">LOCKED · TAP TO PREVIEW</span>
+            </div>
+            <p className="st-dld">{c.fileDesc}</p>
+            <code className="st-dl-file">skills/{node.file}</code>
+          </div>
+        </div>
+
+        <div className="st-c-cta">
+          <button className="st-skbuy" disabled >Get Access · $49/mo</button>
+          <button className="st-skbook" disabled >Book a call</button>
+        </div>
+        <button className="st-needhelp" disabled >Need help building this?</button>
       </div>
-      <button className="st-needhelp" disabled >Need help building this?</button>
     </div>
   )
 }

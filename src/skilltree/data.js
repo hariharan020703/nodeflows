@@ -9,7 +9,12 @@
 // than hardcoded per-department, so adding/removing a department here is all
 // that's needed to reflow the whole wheel evenly. (Radius matches the original
 // verbatim capture: Sales sat at exactly (0, 310).)
-const WHEEL_RADIUS = 310
+// Distance from the hub out to each department badge — i.e. the length of the main spoke
+// edge. Exported because the wheel's on-screen fit is computed from it.
+// Pulled in from 400: with the fans narrowed by ANGLE_SQUEEZE they only span ~36deg, so a
+// tighter ring still leaves ~12deg of clear air between departments and buys render scale
+// (everything on the wheel is drawn in world units and multiplied by that scale).
+export const WHEEL_RADIUS = 390
 
 // Backdrop art, served from public/ (so these are absolute URLs from the site root).
 // `DEFAULT_BG` is what the wheel/overview shows; each department below names its own
