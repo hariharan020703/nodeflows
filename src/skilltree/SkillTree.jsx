@@ -1,13 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { DEFAULT_BG, DEPARTMENTS, WHEEL_RADIUS, getFan } from './data.js'
+import { DEFAULT_BG, DEPARTMENTS, WHEEL_RADIUS, getBranches } from './data.js'
 import { svgIcon } from './icons.js'
 import { WHEEL_LABEL_OFFSET, getWheelTree } from './wheelData.js'
 import './SkillTree.css'
 
-// Three states, matching the three captured pages 1:1:
-//   'wheel'        -> html1.html  (hub + 7 orbiting department mini-trees)
-//   'fan'          -> html2.html  (one department's root badge + team chains)
-//   'fan'+selected -> html3.html  (same fan, zoomed on one node, detail card open)
+// Two views, and one growing tree inside the second:
+//   'wheel' -> the hub + 7 orbiting department mini-trees (html1.html, verbatim geometry)
+//   'fan'   -> that department's details tree: the root badge plus ONE node per branch.
+//              Clicking a branch grows its agent; clicking the agent grows three facet nodes
+//              (skills / connectors / artifacts); clicking a facet opens the sidebar.
+// The wheel geometry is unchanged from the capture. The details tree used to be a chain of job
+// nodes per branch (html2/html3); those jobs are now the skills of the branch's agent.
 const ZOOM_MIN = 0.4
 const ZOOM_MAX = 3
 const ZOOM_STEP = 0.2
@@ -47,6 +50,68 @@ function fitWheelScale(w, h) {
   return Math.max(0.2, Math.min(0.62, fit))
 }
 
+// --- Branch growth: branch -> its agent -> the agent's three facets ---
+// The details view starts as the root badge plus one node per branch. Clicking a branch grows its
+// agent straight on along that branch's own outward direction; clicking the agent grows three
+// facet nodes fanned off it. Each level keeps going the way the last edge pointed, so the whole
+// thing reads as the same branch continuing to grow rather than clusters dropped nearby.
+// Both edges are longer than the root -> branch spokes: growth should feel like the branch
+// pushing well clear of the ring, not a short stub. FACET_SPREAD is wide enough that adjacent
+// facet labels can't touch — at 620 units out, 58° puts ~600 units between neighbouring centres,
+// against a ~490-unit label width for the longest ("CONNECTORS").
+const AGENT_DIST = 620
+const FACET_DIST = 620
+const FACET_SPREAD = 58
+
+const AGENT_FACETS = [
+  { key: 'skills', label: 'Skills', icon: 'facetSkills' },
+  { key: 'connectors', label: 'Connectors', icon: 'facetConnectors' },
+  { key: 'artifacts', label: 'Artifacts', icon: 'facetArtifacts' },
+]
+
+// Width of the facet sidebar. Also the amount the canvas shifts when it opens, so the node you
+// just clicked doesn't end up underneath the panel — must match .st-side's width in the CSS.
+const SIDEBAR_W = 400
+
+// Render scale for the details tree, one step per depth: the ring alone, a branch open (out to
+// its agent), and the agent open (out to the facets). Each step pulls back just far enough for
+// the newly grown level to fit. Node label sizes in the CSS are tuned against these three
+// numbers — they are world units, so changing a zoom here changes what every label measures on
+// screen. Keep the two in step.
+// The two open states frame the expansion itself (centred between the branch and the deepest
+// node), not the whole tree, so they can sit much closer in than a whole-tree fit would allow —
+// the root badge and the far side of the ring simply fall out of frame, which is the point.
+const DETAIL_ZOOM = { branches: 0.38, branchOpen: 0.34, agentOpen: 0.28 }
+
+// Vertical middle of the branch-ring view in world units. The ring grows upward from the root
+// badge at (0,0), so its visual centre is well above the origin; without this the tree renders
+// low and clipped at the top.
+const DETAIL_CENTRE_Y = 390
+
+// Places `count` children on an arc centred on dirAngle, so an odd count keeps one child dead
+// ahead of the branch and the rest splay symmetrically either side of it.
+function fanOut(origin, dirAngle, count, dist, spreadDeg) {
+  return Array.from({ length: count }, (_, i) => {
+    const a = dirAngle + (((i - (count - 1) / 2) * spreadDeg * Math.PI) / 180)
+    return { left: origin.left + Math.cos(a) * dist, top: origin.top + Math.sin(a) * dist }
+  })
+}
+
+function buildGrowth(branch, agentOpen) {
+  if (!branch) return null
+  // One agent, so it sits dead ahead on the branch's own angle rather than being fanned.
+  const agent = {
+    ...branch.agent,
+    left: branch.left + Math.cos(branch.angle) * AGENT_DIST,
+    top: branch.top + Math.sin(branch.angle) * AGENT_DIST,
+  }
+  const facets = agentOpen
+    ? fanOut(agent, branch.angle, AGENT_FACETS.length, FACET_DIST, FACET_SPREAD)
+      .map((p, i) => ({ ...AGENT_FACETS[i], ...p, count: agent[AGENT_FACETS[i].key].length }))
+    : null
+  return { branch, agent, facets }
+}
+
 function normalizeDelta(delta) {
   // Keep an angle delta in (-180, 180] so drag rotation never jumps when the
   // pointer angle wraps across the ±180° seam.
@@ -59,7 +124,12 @@ function normalizeDelta(delta) {
 export default function SkillTree() {
   const [view, setView] = useState('wheel')
   const [deptKey, setDeptKey] = useState('sales')
+  // The three drill-down levels on the canvas: which branch is open (by key), whether its agent
+  // is open, and which of the agent's three facets is showing in the sidebar. Each level clears
+  // the ones below it.
   const [selected, setSelected] = useState(null)
+  const [agentOpen, setAgentOpen] = useState(false)
+  const [facetKey, setFacetKey] = useState(null)
   const [zoom, setZoom] = useState(1)
   const [pan, setPan] = useState({ x: 0, y: 0 })
   const [wheelRotation, setWheelRotation] = useState(0)
@@ -110,7 +180,7 @@ export default function SkillTree() {
   }
 
   function onWorldPointerDown(e) {
-    if (e.target.closest('button, textarea, a, input, #st-card')) return
+    if (e.target.closest('button, textarea, a, input, .st-side')) return
     if (view === 'wheel') {
       const c = hubScreenCenter()
       const angle = (Math.atan2(e.clientY - c.y, e.clientX - c.x) * 180) / Math.PI
@@ -169,7 +239,32 @@ export default function SkillTree() {
   }
 
   const dept = DEPARTMENTS.find((d) => d.key === deptKey)
-  const fan = useMemo(() => getFan(deptKey), [deptKey])
+  const branches = useMemo(() => getBranches(deptKey), [deptKey])
+  const branch = selected ? branches.find((b) => b.key === selected) : null
+  const growth = useMemo(() => buildGrowth(branch, agentOpen), [branch, agentOpen])
+  const openFacet = growth && growth.facets && facetKey
+    ? growth.facets.find((f) => f.key === facetKey)
+    : null
+
+  // Clicking an open node again collapses that level, so the tree can be walked back in without
+  // reaching for a close button.
+  function pickBranch(key) {
+    setAgentOpen(false)
+    setFacetKey(null)
+    setSelected(key === selected ? null : key)
+  }
+  function toggleAgent() {
+    setFacetKey(null)
+    setAgentOpen((v) => !v)
+  }
+  function pickFacet(key) {
+    setFacetKey(key === facetKey ? null : key)
+  }
+  function collapseAll() {
+    setSelected(null)
+    setAgentOpen(false)
+    setFacetKey(null)
+  }
   const deptIdx = DEPARTMENTS.findIndex((d) => d.key === deptKey)
   const prevDept = DEPARTMENTS[(deptIdx - 1 + DEPARTMENTS.length) % DEPARTMENTS.length]
   const nextDept = DEPARTMENTS[(deptIdx + 1) % DEPARTMENTS.length]
@@ -243,14 +338,27 @@ export default function SkillTree() {
     ty = wheelHubY - viewport.h * 0.56
     baseScale = wheelScale
   } else if (!selected) {
+    // The branch ring reaches ~700 units plus its labels, where the old job-chain fan reached
+    // ~1900 — so it needs a much larger scale than the 0.26 inherited from that fan, which is
+    // what made every label look shrunken. Centred on the tree's own middle (the ring sits above
+    // the root badge, so that middle is well above the origin) rather than a magic offset.
     tx = 0
-    ty = 159.3
-    baseScale = 0.2604
+    ty = wheelHubY - viewport.h * 0.56 + DETAIL_CENTRE_Y * DETAIL_ZOOM.branches
+    baseScale = DETAIL_ZOOM.branches
   } else {
-    // Smaller than before (was 1.35) so clicking a node zooms in less aggressively.
-    const nodeZoom = 0.30
-    tx = -selected.left * nodeZoom
-    ty = -selected.top * nodeZoom - 60
+    // Frame the deepest thing that's grown, pulling back a step per level so the new nodes have
+    // room to appear instead of pushing off screen.
+    const deepest = agentOpen && growth.facets
+      ? growth.facets[Math.floor(growth.facets.length / 2)]
+      : (agentOpen ? growth.agent : branch)
+    const nodeZoom = agentOpen ? DETAIL_ZOOM.agentOpen : DETAIL_ZOOM.branchOpen
+    // Centre between the branch and the deepest node, so the branch that got you there stays in
+    // frame rather than the view jumping to the tip alone. Shifted left when the sidebar is open
+    // so the panel doesn't cover what you just clicked.
+    const cx = (branch.left + deepest.left) / 2
+    const cy = (branch.top + deepest.top) / 2
+    tx = -cx * nodeZoom + (facetKey ? -SIDEBAR_W / 2 : 0)
+    ty = -cy * nodeZoom - 60
     baseScale = nodeZoom
   }
   const worldStyle = {
@@ -294,9 +402,14 @@ export default function SkillTree() {
             <Fan
               key={dept.key}
               dept={dept}
-              fan={fan}
+              branches={branches}
               selected={selected}
-              onSelect={setSelected}
+              growth={growth}
+              agentOpen={agentOpen}
+              facetKey={facetKey}
+              onPickBranch={pickBranch}
+              onToggleAgent={toggleAgent}
+              onPickFacet={pickFacet}
               revealed={branchesRevealed}
             />
           </div>
@@ -323,8 +436,21 @@ export default function SkillTree() {
         </>
       )}
 
-      {selected && (
-        <Card node={selected} dept={dept} onClose={() => setSelected(null)} />
+      {/* The canvas carries the structure, the sidebar carries the words. It opens only at the
+          last level — clicking one of the three facet nodes — so the earlier steps stay a pure
+          tree and nothing covers the canvas until there's a list to read. */}
+      {openFacet && (
+        <FacetSidebar
+          facet={openFacet}
+          agent={growth.agent}
+          branch={branch}
+          dept={dept}
+          onClose={() => setFacetKey(null)}
+        />
+      )}
+
+      {view === 'fan' && selected && (
+        <button className="st-collapse" onClick={collapseAll}>× COLLAPSE {branch.name.toUpperCase()}</button>
       )}
 
       {view === 'wheel' && (
@@ -661,165 +787,171 @@ function Mini({ dept, onOpen, ringRotation, picked }) {
   )
 }
 
-function Fan({ dept, fan, selected, onSelect, revealed }) {
-  const minX = Math.min(0, ...fan.nodes.map((n) => n.left)) - 200
-  const maxX = Math.max(0, ...fan.nodes.map((n) => n.left)) + 200
-  const minY = Math.min(0, ...fan.nodes.map((n) => n.top)) - 200
-  const maxY = Math.max(0, ...fan.nodes.map((n) => n.top)) + 200
+// The department details tree. Starts as the root badge plus one node per branch; a branch grows
+// its agent when clicked, and the agent grows the three facet nodes. Every edge uses the same
+// .st-drawline class, so a level that mounts draws itself on exactly like the original branches.
+function Fan({ dept, branches, selected, growth, agentOpen, facetKey, onPickBranch, onToggleAgent, onPickFacet, revealed }) {
+  // Grown nodes sit outside the branch ring, so they have to be inside the bounds the line <svg>
+  // is sized from or their edges get clipped.
+  const grown = growth ? [growth.agent, ...(growth.facets || [])] : []
+  const xs = [0, ...branches.map((b) => b.left), ...grown.map((g) => g.left)]
+  const ys = [0, ...branches.map((b) => b.top), ...grown.map((g) => g.top)]
+  const minX = Math.min(...xs) - 320
+  const maxX = Math.max(...xs) + 320
+  const minY = Math.min(...ys) - 320
+  const maxY = Math.max(...ys) + 320
   return (
-    <div className={`st-fan ${revealed ? 'revealed' : ''}`} style={{ '--c': dept.color }}>
+    <div className={`st-fan ${revealed ? 'revealed' : ''} ${selected ? 'focused' : ''}`} style={{ '--c': dept.color }}>
       <div className="st-ghost">{dept.name}</div>
       <svg className="st-lines" style={{ left: minX, top: minY, width: maxX - minX, height: maxY - minY }}>
         <g transform={`translate(${-minX},${-minY})`}>
-          {fan.lines.map((l, i) => {
-            // All chains start at the same moment; within a chain, segments draw
-            // one after another outward from the root (delay keyed on `seg`,
-            // the segment's position along its own chain — not the flat index).
-            const delay = l.seg * 0.32
-            const dx = l.x2 - l.x1
-            const dy = l.y2 - l.y1
-            const len = Math.hypot(dx, dy) || 1
-            const mx = l.x1 + dx * 0.4
-            const my = l.y1 + dy * 0.4
-            const px = (-dy / len) * 26
-            const py = (dx / len) * 26
-            return (
-              <g key={i}>
-                <path className="st-drawline" style={{ '--d': `${delay}s` }} d={`M ${l.x1} ${l.y1} L ${l.x2} ${l.y2}`} pathLength="1" />
-                <g className="st-edge-marker" style={{ '--d': `${delay + 0.3}s` }}>
-                  <line x1={mx} y1={my} x2={mx + px} y2={my + py} />
-                  <circle cx={mx + px} cy={my + py} r="7" />
+          {/* root -> each branch, all drawing outward together */}
+          <g className="st-baselines">
+            {branches.map((b, i) => {
+              const mx = b.left * 0.45
+              const my = b.top * 0.45
+              const len = Math.hypot(b.left, b.top) || 1
+              const px = (-b.top / len) * 26
+              const py = (b.left / len) * 26
+              return (
+                <g key={b.key}>
+                  <path className="st-drawline" style={{ '--d': `${i * 0.08}s` }} d={`M 0 0 L ${b.left} ${b.top}`} pathLength="1" />
+                  <g className="st-edge-marker" style={{ '--d': `${i * 0.08 + 0.3}s` }}>
+                    <line x1={mx} y1={my} x2={mx + px} y2={my + py} />
+                    <circle cx={mx + px} cy={my + py} r="7" />
+                  </g>
                 </g>
-              </g>
-            )
-          })}
+              )
+            })}
+          </g>
+
+          {growth && (
+            <g className="st-grow">
+              <path
+                className="st-drawline st-drawline-agent"
+                d={`M ${growth.branch.left} ${growth.branch.top} L ${growth.agent.left} ${growth.agent.top}`}
+                pathLength="1"
+              />
+              {growth.facets && growth.facets.map((f, i) => (
+                <path
+                  key={f.key}
+                  className="st-drawline st-drawline-facet"
+                  style={{ '--d': `${i * 0.09}s` }}
+                  d={`M ${growth.agent.left} ${growth.agent.top} L ${f.left} ${f.top}`}
+                  pathLength="1"
+                />
+              ))}
+            </g>
+          )}
         </g>
       </svg>
 
       <div className="st-root-badge" dangerouslySetInnerHTML={{ __html: svgIcon(dept.icon) }} />
       <div className="st-root-name">{dept.name}</div>
 
-      {fan.teams.map((t) => (
-        <div key={t.name} className="st-team-label" style={{ left: t.left, top: t.top }}>
-          {t.name}
-        </div>
-      ))}
-
-      {fan.nodes.map((n) => {
-        const isSelected = selected && selected.name === n.name
-        const faded = selected && !isSelected
+      {/* --- level 1: one node per branch --- */}
+      {branches.map((b, i) => {
+        const isOpen = b.key === selected
         return (
           <button
-            key={n.name}
-            className={`st-node st-node-${n.status} ${isSelected ? 'selected' : ''} ${faded ? 'faded' : ''}`}
-            style={{ left: n.left, top: n.top, '--d': `${(n.seg || 0) * 0.32 + 0.6}s` }}
-            onClick={() => onSelect(n)}
+            key={b.key}
+            className={`st-node st-bnode st-node-${b.status} ${isOpen ? 'selected' : ''} ${selected && !isOpen ? 'faded' : ''}`}
+            style={{ left: b.left, top: b.top, '--d': `${0.5 + i * 0.08}s` }}
+            onClick={() => onPickBranch(b.key)}
           >
-            <span className="st-node-icon" dangerouslySetInnerHTML={{ __html: svgIcon(n.icon) }} />
-            {n.tag && <span className="st-ftag">{n.tag}</span>}
-            <span className="st-nlabel">{n.name}</span>
+            <span className="st-node-icon" dangerouslySetInnerHTML={{ __html: svgIcon(b.icon) }} />
+            <span className="st-nlabel">{b.name}</span>
+            {/* Jobs inside this branch — the affordance that says the node opens. */}
+            <span className="st-nkids">{b.jobs.length}</span>
           </button>
         )
       })}
+
+      {/* --- level 2: that branch's agent --- */}
+      {growth && (
+        <button
+          className={`st-node st-anode st-node-${growth.agent.status} ${agentOpen ? 'selected' : ''}`}
+          style={{ left: growth.agent.left, top: growth.agent.top, '--d': '0.28s' }}
+          onClick={onToggleAgent}
+        >
+          <span className="st-node-icon" dangerouslySetInnerHTML={{ __html: svgIcon('users') }} />
+          <span className="st-nlabel">{growth.agent.name}</span>
+        </button>
+      )}
+
+      {/* --- level 3: skills / connectors / artifacts --- */}
+      {growth && growth.facets && growth.facets.map((f, i) => (
+        <button
+          key={f.key}
+          className={`st-node st-fnode ${f.key === facetKey ? 'selected' : ''}`}
+          style={{ left: f.left, top: f.top, '--d': `${0.28 + i * 0.09}s` }}
+          onClick={() => onPickFacet(f.key)}
+        >
+          <span className="st-node-icon" dangerouslySetInnerHTML={{ __html: svgIcon(f.icon) }} />
+          <span className="st-nlabel">{f.label}</span>
+          <span className="st-nkids">{f.count}</span>
+        </button>
+      ))}
     </div>
   )
 }
 
-function Card({ node, dept, onClose }) {
-  const c = node.card
+// Opened by clicking one of the three facet nodes — the only place in this flow that shows a
+// list, since the three levels before it are all structure the tree can carry itself.
+function FacetSidebar({ facet, agent, branch, dept, onClose }) {
+  const items = agent[facet.key]
   return (
-    <div id="st-card" className="open" style={{ '--c': dept.color }}>
-      <button className="st-c-x" onClick={onClose} aria-label="close">×</button>
-      {/* Only this inner wrapper scrolls, so .st-c-x stays pinned to the card corner. */}
-      <div className="st-c-body">
-        <div className="st-c-state">{node.status === 'deployed' ? 'fully autonomous' : node.status === 'dev' ? 'human-assisted' : 'human-led'}</div>
-        <div className="st-c-name">
-          {node.name}
-          {node.tag && <span className="st-c-found">{node.tag}</span>}
+    <aside className="st-side" style={{ '--c': dept.color }}>
+      <button className="st-side-x" onClick={onClose} aria-label="close">×</button>
+      <div className="st-side-body">
+        <div className="st-side-crumb">{dept.name} · {branch.name} · {agent.name}</div>
+        <div className="st-side-title">
+          <span className="st-side-icon" dangerouslySetInnerHTML={{ __html: svgIcon(facet.icon) }} />
+          <span className="st-side-name">{facet.label}</span>
+          <span className="st-side-n">{items.length}</span>
         </div>
-        <div className="st-c-crumb">{c.crumb}</div>
-        <p className="st-c-desc">{c.desc}</p>
+        <p className="st-side-desc">{FACET_BLURB[facet.key]}</p>
 
-        <div className="st-c-section">
-          <div className="st-c-h">BREAKS INTO</div>
-          <div className="st-c-skills">
-            {c.skills.map((s) => (
-              <span key={s} className="st-c-skill">{s}</span>
-            ))}
-          </div>
-        </div>
-
-        <div className="st-c-section">
-          <div className="st-c-h">YOUR STATUS</div>
-          <div className="st-c-my">
-            <span className={node.status === 'plan' ? 'on' : ''}>Not started</span>
-            <span className={node.status === 'dev' ? 'on' : ''}>In development</span>
-            <span className={node.status === 'deployed' ? 'on' : ''}>Live</span>
-          </div>
-        </div>
-
-        <div className="st-c-section">
-          <div className="st-c-h">YOUR NOTES</div>
-          <textarea className="st-c-note" placeholder="Add a note…" />
-        </div>
-
-        <div className="st-c-section">
-          <div className="st-c-h">BUILDS ON</div>
-          <div className="st-c-req">{c.buildsOn}</div>
-        </div>
-
-        <div className="st-c-section">
-          <div className="st-c-h">WHAT IT REPLACES</div>
-          <p className="st-c-replaces">{c.replaces}</p>
-        </div>
-
-        <div className="st-c-section">
-          <div className="st-c-h">THE LADDER</div>
-          <div className="st-ladder">
-            <div className="st-lrow">
-              <span>Human-led</span>
-              <p>{c.ladder.humanLed}</p>
+        <div className="st-items">
+          {items.map((it) => (
+            <div key={it.name} className="st-item">
+              <div className="st-item-top">
+                <span className="st-item-name">{it.name}</span>
+                <span className={`st-ipill st-ipill-${it.status || it.meta}`}>{it.status || it.meta}</span>
+              </div>
+              <p className="st-item-desc">{it.desc}</p>
             </div>
-            <div className={`st-lrow ${node.status === 'dev' ? 'cur' : ''}`}>
-              <span>Human-assisted</span>
-              <p>{c.ladder.humanAssisted}</p>
+          ))}
+        </div>
+
+        {/* Only the skills list has a matching .md file behind it; the other two facets describe
+            wiring and output, which aren't things you download. */}
+        {facet.key === 'skills' && (
+          <div className="st-side-sec">
+            <div className="st-side-h">THE SKILL FILE · LOCKED</div>
+            <div className="st-dl-locked">
+              <div className="st-dl-top">
+                <span>🔒</span>
+                <span className="st-dl-name">{agent.name}</span>
+                <span className="st-dl-tag">LOCKED · TAP TO PREVIEW</span>
+              </div>
+              <p className="st-dld">{agent.desc}</p>
+              <code className="st-dl-file">skills/{agent.file}</code>
             </div>
-            <div className={`st-lrow ${node.status === 'deployed' ? 'cur' : ''}`}>
-              <span>Fully autonomous</span>
-              <p>{c.ladder.fullyAutonomous}</p>
+            <div className="st-side-cta">
+              <button className="st-skbuy" disabled>Get Access · $49/mo</button>
+              <button className="st-skbook" disabled>Book a call</button>
             </div>
           </div>
-        </div>
-
-        <div className="st-c-section">
-          <div className="st-c-h">THE HUMAN</div>
-          <p className="st-c-replaces">{c.human}</p>
-        </div>
-
-        <div className="st-c-section">
-          <div className="st-c-h">BUILD NOTES</div>
-          <p className="st-c-replaces">{c.notes}</p>
-        </div>
-
-        <div className="st-c-section">
-          <div className="st-c-h">THE SKILLS · LOCKED</div>
-          <div className="st-dl st-dl-locked">
-            <div className="st-dl-top">
-              <span>🔒</span>
-              <span className="st-dl-name">{node.skill}</span>
-              <span className="st-dl-tag">LOCKED · TAP TO PREVIEW</span>
-            </div>
-            <p className="st-dld">{c.fileDesc}</p>
-            <code className="st-dl-file">skills/{node.file}</code>
-          </div>
-        </div>
-
-        <div className="st-c-cta">
-          <button className="st-skbuy" disabled >Get Access · $49/mo</button>
-          <button className="st-skbook" disabled >Book a call</button>
-        </div>
-        <button className="st-needhelp" disabled >Need help building this?</button>
+        )}
       </div>
-    </div>
+    </aside>
   )
 }
+
+const FACET_BLURB = {
+  skills: 'What this agent can do. Each one is a job the branch used to carry as its own node.',
+  connectors: 'The systems it reads from and writes to. Anything marked available is wired but not switched on yet.',
+  artifacts: 'What it produces, and where the output lands once a run finishes.',
+}
+

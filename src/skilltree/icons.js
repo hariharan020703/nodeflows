@@ -64,6 +64,16 @@ export const ICONS = {
   globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18"/>',
   doc: '<path d="M6 2h8l4 4v16H6z"/><path d="M14 2v4h4"/>',
   scale: '<path d="M12 3v18"/><path d="M4 8l4-3 4 3M12 8l4-3 4 3"/><path d="M4 8l0 5a4 2 0 008 0V8M12 8l0 5a4 2 0 008 0V8"/>',
+
+  // --- the three facet nodes, drawn to be told apart at a glance rather than reusing the
+  // generic set: a capability (spark inside a ring), a plug (something wired in), and a stack
+  // of produced files. Same 24x24 box and stroke conventions as everything above.
+  facetSkills:
+    '<circle cx="12" cy="12" r="9"/><path d="M12 7l1.4 3.6L17 12l-3.6 1.4L12 17l-1.4-3.6L7 12l3.6-1.4L12 7z"/>',
+  facetConnectors:
+    '<path d="M9 2v5M15 2v5"/><path d="M6.5 7h11v3.5a5.5 5.5 0 0 1-11 0V7z"/><path d="M12 16.5V22"/>',
+  facetArtifacts:
+    '<path d="M8 2h7l4 4v10H8V2z"/><path d="M15 2v4h4"/><path d="M16 19v1a2 2 0 0 1-2 2H5V8"/>',
 }
 
 export function svgIcon(key, extra = '') {

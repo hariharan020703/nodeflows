@@ -109,6 +109,85 @@ function placeholderCard(node, dept) {
   }
 }
 
+// --- Branch agents: the levels that grow out of a branch node when you click it ---
+// A department's details view shows ONE node per branch (per team). Clicking it sprouts that
+// branch's agent; clicking the agent sprouts its three facets:
+//   skills     · what the agent can do — the team's jobs, which are exactly its capabilities
+//   connectors · the outside systems it reads from / writes to
+//   artifacts  · what it produces, and where that lands
+// Connectors and artifacts are derived deterministically from the team name, so a branch always
+// shows the same thing across renders. Swap these generators for real data later — the UI reads
+// only the shape, not the source.
+const CONNECTOR_POOL = {
+  sales: [['HubSpot', 'CRM'], ['Apollo', 'Data'], ['Gmail', 'Email'], ['LinkedIn', 'Social'], ['Clay', 'Enrichment']],
+  deals: [['HubSpot', 'CRM'], ['Gong', 'Calls'], ['DocuSign', 'E-sign'], ['Slack', 'Chat'], ['Stripe', 'Billing']],
+  marketing: [['WordPress', 'CMS'], ['Buffer', 'Social'], ['Mailchimp', 'Email'], ['GA4', 'Analytics'], ['Canva', 'Design']],
+  operations: [['Notion', 'Docs'], ['Jira', 'Tickets'], ['Zapier', 'Automation'], ['Slack', 'Chat'], ['Google Drive', 'Files']],
+  intelligence: [['Crunchbase', 'Data'], ['Clearbit', 'Enrichment'], ['Google News', 'Signals'], ['BigQuery', 'Warehouse'], ['Perplexity', 'Research']],
+  customer: [['Intercom', 'Support'], ['Zendesk', 'Tickets'], ['Slack', 'Chat'], ['Notion', 'Docs'], ['Typeform', 'Surveys']],
+  backoffice: [['QuickBooks', 'Accounting'], ['Stripe', 'Payments'], ['Gusto', 'Payroll'], ['Ramp', 'Expenses'], ['Google Sheets', 'Sheets']],
+}
+const GENERIC_CONNECTORS = [['Slack', 'Chat'], ['Google Drive', 'Files'], ['Notion', 'Docs'], ['Zapier', 'Automation'], ['Gmail', 'Email']]
+
+function hashName(s) {
+  let h = 0
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0
+  return Math.abs(h)
+}
+
+function slugify(s) {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+}
+
+// Three connectors per agent, read from the department's pool at consecutive offsets, so they
+// stay stable per agent and never repeat within one list.
+function pickConnectors(deptKey, seed) {
+  const pool = CONNECTOR_POOL[deptKey] || GENERIC_CONNECTORS
+  return [0, 1, 2].map((i) => {
+    const [name, kind] = pool[(seed + i) % pool.length]
+    return { name, meta: kind, status: i === 2 ? 'available' : 'connected' }
+  })
+}
+
+// A branch's single agent. Its skills are the team's own jobs — which is what they always were:
+// "Blog Drafting" is a thing the Content agent can do, not a separate box on the tree.
+function buildBranchAgent(team, jobs, dept) {
+  const seed = hashName(team)
+  const teamSlug = slugify(team)
+  // The most-used skill name across the team's jobs — the closest thing the data has to "who
+  // this branch's agent is", rather than inventing a name.
+  const counts = {}
+  jobs.forEach((j) => { counts[j.skill] = (counts[j.skill] || 0) + 1 })
+  const name = Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0]
+  const lead = jobs.find((j) => j.skill === name) || jobs[0]
+  return {
+    id: `${dept.key}-${teamSlug}`,
+    name,
+    role: `${team.toLowerCase()} agent`,
+    status: branchStatus(jobs),
+    desc: `Runs ${dept.name}'s ${team.toLowerCase()} work end to end · ${jobs.length} skill${jobs.length > 1 ? 's' : ''} across ${team.toLowerCase()}.`,
+    file: lead.file,
+    // One skill per job, carrying that job's own status and card copy, so nothing that used to be
+    // on the tree is lost — it moved one level in.
+    skills: jobs.map((j) => ({ name: j.name, meta: j.status, status: j.status, desc: j.card.desc })),
+    connectors: pickConnectors(dept.key, seed),
+    artifacts: [
+      { name: `${team} deliverables`, meta: 'document', desc: `The finished output of each ${team.toLowerCase()} run, ready for review or release.` },
+      { name: `${teamSlug}-run-log`, meta: 'record', desc: 'Inputs, decisions and timings for every run, so a result can be traced back.' },
+      { name: 'Handoff summary', meta: 'message', desc: `Posted to the ${dept.name} channel when a run completes, with what changed.` },
+    ],
+  }
+}
+
+// A branch is as far along as its weakest job: all live -> live, none started -> not started,
+// anything in between -> in development. Showing "live" for a branch with unbuilt jobs inside
+// would be the one wrong answer here.
+function branchStatus(jobs) {
+  if (jobs.every((j) => j.status === 'deployed')) return 'deployed'
+  if (jobs.every((j) => j.status === 'plan')) return 'plan'
+  return 'dev'
+}
+
 function buildSalesFan() {
   const nodes = salesNodes.map((n) => ({
     ...n,
@@ -277,6 +356,47 @@ export function getFan(deptKey) {
   const scaled = scaleFan(fan)
   FAN_CACHE[deptKey] = scaled
   return scaled
+}
+
+// How far out from the root badge the branch nodes sit. One ring rather than each branch keeping
+// its old chain length, so the five nodes read as siblings — and so every branch has the same
+// clear space outward for its agent and facets to grow into.
+const BRANCH_RADIUS = 700
+
+// The details view's nodes: exactly one per branch (per team), in the fan's own angular order so
+// a department keeps the shape it had on the wheel. The team's jobs don't disappear — they become
+// the skills of that branch's agent.
+const BRANCH_CACHE = {}
+export function getBranches(deptKey) {
+  if (BRANCH_CACHE[deptKey]) return BRANCH_CACHE[deptKey]
+  const dept = DEPARTMENTS.find((d) => d.key === deptKey)
+  const fan = getFan(deptKey)
+
+  const byTeam = new Map()
+  fan.nodes.forEach((n) => {
+    if (!byTeam.has(n.team)) byTeam.set(n.team, [])
+    byTeam.get(n.team).push(n)
+  })
+
+  const branches = [...byTeam].map(([team, jobs]) => {
+    // Direction comes from the team's outermost job, which is the direction that chain was
+    // already heading — so the branch node lands where the eye expects that team to be.
+    const tip = jobs[jobs.length - 1]
+    const angle = Math.atan2(tip.top, tip.left)
+    return {
+      key: slugify(team),
+      name: team,
+      left: Math.cos(angle) * BRANCH_RADIUS,
+      top: Math.sin(angle) * BRANCH_RADIUS,
+      angle,
+      status: branchStatus(jobs),
+      icon: jobs[0].icon,
+      jobs,
+      agent: buildBranchAgent(team, jobs, dept),
+    }
+  })
+  BRANCH_CACHE[deptKey] = branches
+  return branches
 }
 
 export function deptTotals(deptKey) {
