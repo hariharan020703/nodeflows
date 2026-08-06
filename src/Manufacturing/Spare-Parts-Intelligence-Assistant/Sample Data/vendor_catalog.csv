@@ -1,0 +1,61 @@
+vendor_id,vendor_name,material_id,price,moq,lead_time_days,otif_rate
+VEND-1001,Bearing & Power Transmission Supply Co,SP-BRG-6205-2RS,17.90,10,9,0.96
+VEND-1009,Specialty Bearings Direct,SP-BRG-6205-2RS,19.75,1,6,0.98
+VEND-1004,General MRO Distributor,SP-BRG-6205-2RS,18.60,5,12,0.89
+VEND-1001,Bearing & Power Transmission Supply Co,SP-BRG-6308-2RS,41.20,5,13,0.96
+VEND-1009,Specialty Bearings Direct,SP-BRG-6308-2RS,44.90,1,8,0.98
+VEND-1004,General MRO Distributor,SP-SEAL-NBR-45x65x8,5.95,10,6,0.91
+VEND-1006,Fasteners & Fluid Power Inc,SP-SEAL-NBR-45x65x8,6.40,25,5,0.94
+VEND-1004,General MRO Distributor,SP-BELT-A-42,13.75,5,4,0.91
+VEND-1010,Global Industrial Parts,SP-BELT-A-42,14.50,1,7,0.93
+VEND-1003,Industrial Hydraulics & Filtration,SP-FILT-HYD-10U,22.10,4,7,0.95
+VEND-1004,General MRO Distributor,SP-FILT-HYD-10U,23.80,10,10,0.91
+VEND-1004,General MRO Distributor,SP-FILT-AIR-STD,8.90,10,4,0.91
+VEND-1010,Global Industrial Parts,SP-FILT-AIR-STD,9.60,1,6,0.93
+VEND-1002,Motion & Automation Components,SP-SENS-PROX-M12,56.50,2,10,0.97
+VEND-1007,Electrical Controls Distributor,SP-SENS-PROX-M12,59.90,1,14,0.90
+VEND-1002,Motion & Automation Components,SP-SENS-TEMP-PT100,72.00,2,16,0.97
+VEND-1007,Electrical Controls Distributor,SP-SENS-TEMP-PT100,76.25,1,19,0.90
+VEND-1005,OEM Motors & Drives,SP-MOTOR-3PH-5HP,598.00,1,32,0.94
+VEND-1008,Regional MRO Supplier,SP-MOTOR-3PH-5HP,632.50,1,38,0.86
+VEND-1005,OEM Motors & Drives,SP-MOTOR-3PH-10HP,1155.00,1,39,0.94
+VEND-1008,Regional MRO Supplier,SP-MOTOR-3PH-10HP,1225.00,1,46,0.86
+VEND-1006,Fasteners & Fluid Power Inc,SP-GASKET-FLNG-DN50,3.60,50,5,0.94
+VEND-1004,General MRO Distributor,SP-GASKET-FLNG-DN50,4.05,25,7,0.91
+VEND-1003,Industrial Hydraulics & Filtration,SP-VALVE-BALL-2IN,92.50,2,13,0.95
+VEND-1008,Regional MRO Supplier,SP-VALVE-BALL-2IN,99.00,1,17,0.86
+VEND-1002,Motion & Automation Components,SP-VALVE-SOLENOID-24V,132.00,1,11,0.97
+VEND-1007,Electrical Controls Distributor,SP-VALVE-SOLENOID-24V,141.75,1,14,0.90
+VEND-1003,Industrial Hydraulics & Filtration,SP-PUMP-CENTRIF-3KW,2380.00,1,37,0.95
+VEND-1008,Regional MRO Supplier,SP-PUMP-CENTRIF-3KW,2510.00,1,44,0.86
+VEND-1007,Electrical Controls Distributor,SP-CONTACTOR-40A,84.50,2,9,0.90
+VEND-1002,Motion & Automation Components,SP-CONTACTOR-40A,89.00,1,11,0.97
+VEND-1007,Electrical Controls Distributor,SP-RELAY-24VDC,11.20,10,5,0.90
+VEND-1004,General MRO Distributor,SP-RELAY-24VDC,12.35,10,8,0.91
+VEND-1001,Bearing & Power Transmission Supply Co,SP-COUPLING-FLEX-25MM,61.80,1,13,0.96
+VEND-1010,Global Industrial Parts,SP-COUPLING-FLEX-25MM,66.90,1,17,0.93
+VEND-1001,Bearing & Power Transmission Supply Co,SP-CHAIN-RS50,46.50,2,8,0.96
+VEND-1010,Global Industrial Parts,SP-CHAIN-RS50,50.20,1,11,0.93
+VEND-1001,Bearing & Power Transmission Supply Co,SP-SPROCKET-RS50-20T,31.00,2,10,0.96
+VEND-1009,Specialty Bearings Direct,SP-BRG-22212-CC,206.00,1,24,0.98
+VEND-1001,Bearing & Power Transmission Supply Co,SP-BRG-22212-CC,218.50,1,30,0.96
+VEND-1005,OEM Motors & Drives,SP-VFD-15KW,1790.00,1,41,0.94
+VEND-1002,Motion & Automation Components,SP-VFD-15KW,1865.00,1,45,0.97
+VEND-1007,Electrical Controls Distributor,SP-FUSE-32A,3.85,25,3,0.90
+VEND-1004,General MRO Distributor,SP-FUSE-32A,4.30,20,5,0.91
+VEND-1005,OEM Motors & Drives,SP-GEARBOX-HELICAL-2-1,3080.00,1,47,0.94
+VEND-1009,Specialty Bearings Direct,SP-GEARBOX-HELICAL-2-1,3260.00,1,52,0.98
+VEND-1006,Fasteners & Fluid Power Inc,SP-LUBE-GREASE-EP2,5.20,24,4,0.94
+VEND-1004,General MRO Distributor,SP-LUBE-GREASE-EP2,5.85,12,6,0.91
+VEND-1003,Industrial Hydraulics & Filtration,SP-HOSE-HYD-1IN,37.90,2,7,0.95
+VEND-1006,Fasteners & Fluid Power Inc,SP-HOSE-HYD-1IN,40.60,1,9,0.94
+VEND-1002,Motion & Automation Components,SP-PLC-CPU-1200,865.00,1,27,0.97
+VEND-1007,Electrical Controls Distributor,SP-PLC-CPU-1200,910.00,1,31,0.90
+VEND-1002,Motion & Automation Components,SP-ENCODER-INC-1024,159.00,1,18,0.97
+VEND-1009,Specialty Bearings Direct,SP-ENCODER-INC-1024,171.50,1,22,0.98
+VEND-1003,Industrial Hydraulics & Filtration,SP-FILT-OIL-SPIN,11.75,10,5,0.95
+VEND-1004,General MRO Distributor,SP-FILT-OIL-SPIN,13.10,10,7,0.91
+VEND-1001,Bearing & Power Transmission Supply Co,SP-BEARING-PILLOW-UCP205,27.40,4,9,0.96
+VEND-1010,Global Industrial Parts,SP-BEARING-PILLOW-UCP205,29.90,1,12,0.93
+VEND-1007,Electrical Controls Distributor,SP-LIMIT-SWITCH-ROLLER,39.60,2,8,0.90
+VEND-1002,Motion & Automation Components,SP-LIMIT-SWITCH-ROLLER,42.75,1,10,0.97

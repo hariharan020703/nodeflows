@@ -1,0 +1,34 @@
+{
+  "mcpServers": {
+    "sap-pm": {
+      "type": "http",
+      "url": "https://mcp.internal.company.com/sap-pm",
+      "env": { "SAP_PM_MCP_TOKEN": "${SAP_PM_MCP_TOKEN}" }
+    },
+    "sql-database": {
+      "type": "http",
+      "url": "https://mcp.internal.company.com/sql-database",
+      "env": { "SQL_DATABASE_MCP_TOKEN": "${SQL_DATABASE_MCP_TOKEN}" }
+    },
+    "opc-ua-plc": {
+      "type": "http",
+      "url": "https://mcp.internal.company.com/opc-ua-plc",
+      "env": { "OPC_UA_PLC_MCP_TOKEN": "${OPC_UA_PLC_MCP_TOKEN}" }
+    },
+    "sharepoint": {
+      "type": "http",
+      "url": "https://mcp.internal.company.com/sharepoint",
+      "env": { "SHAREPOINT_MCP_TOKEN": "${SHAREPOINT_MCP_TOKEN}" }
+    },
+    "microsoft-teams": {
+      "type": "http",
+      "url": "https://mcp.internal.company.com/microsoft-teams",
+      "env": { "MICROSOFT_TEAMS_MCP_TOKEN": "${MICROSOFT_TEAMS_MCP_TOKEN}" }
+    },
+    "outlook": {
+      "type": "http",
+      "url": "https://mcp.internal.company.com/outlook",
+      "env": { "OUTLOOK_MCP_TOKEN": "${OUTLOOK_MCP_TOKEN}" }
+    }
+  }
+}

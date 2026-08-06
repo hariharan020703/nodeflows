@@ -1,0 +1,50 @@
+{
+  "tools": [
+    {
+      "name": "outlook_send_mail",
+      "description": "Send an HTML email notification (report, escalation, or shift summary) from the dedicated service mailbox to a pre-approved distribution list or recipient. This is a write action restricted to pre-approved distribution lists/mailboxes; it cannot send to arbitrary external domains without an explicit allow-list entry.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "subject": { "type": "string" },
+          "html_body": { "type": "string" },
+          "to_recipients": { "type": "array", "items": { "type": "string" }, "description": "Email addresses, must resolve to a pre-approved distribution list or mailbox." },
+          "attachments_base64": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "file_name": { "type": "string" },
+                "content_base64": { "type": "string" }
+              }
+            }
+          }
+        },
+        "required": ["subject", "html_body", "to_recipients"]
+      }
+    },
+    {
+      "name": "outlook_get_inbound_messages",
+      "description": "Retrieve inbound messages from the service mailbox's inbox matching a sender/subject filter (e.g., vendor quotes, technician notes). Optional ingestion path; not enabled for this use case in the initial rollout scope.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "sender_filter": { "type": "string" },
+          "subject_filter": { "type": "string" },
+          "since": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "name": "outlook_check_delivery_status",
+      "description": "Check the delivery/bounce (NDR) status of a previously sent message, used to detect repeated bounces for a distribution-list data-quality alert.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "message_id": { "type": "string" }
+        },
+        "required": ["message_id"]
+      }
+    }
+  ]
+}

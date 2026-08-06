@@ -1,0 +1,52 @@
+{
+  "tools": [
+    {
+      "name": "opcua_get_live_tag_value",
+      "description": "Retrieve the current value of a live OPC-UA tag (vibration, temperature, pressure, current, or digital alarm) for an equipment. Read-only; this connector never writes setpoints or control values back to PLCs.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "node_id": { "type": "string", "description": "OPC-UA node ID, e.g. 'ns=2;s=Line3.Pump01.Vibration.RMS_Velocity'." },
+          "equipment_id": { "type": "string", "description": "SAP PM equipment ID mapped from the tag-to-asset mapping table." }
+        }
+      }
+    },
+    {
+      "name": "opcua_get_tag_history",
+      "description": "Retrieve historical values for one or more OPC-UA tags over a time window via the HistoryRead service, for backfill and model training data.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "node_ids": { "type": "array", "items": { "type": "string" } },
+          "start_time": { "type": "string", "format": "date-time" },
+          "end_time": { "type": "string", "format": "date-time" }
+        },
+        "required": ["node_ids", "start_time", "end_time"]
+      }
+    },
+    {
+      "name": "opcua_subscribe_tags",
+      "description": "Create or update a real-time publish/subscribe subscription for a list of OPC-UA tags at a given sampling interval, so new values stream to the SQL staging layer as they arrive.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "node_ids": { "type": "array", "items": { "type": "string" } },
+          "sampling_interval_ms": { "type": "integer", "minimum": 100 },
+          "queue_size": { "type": "integer", "minimum": 1 }
+        },
+        "required": ["node_ids"]
+      }
+    },
+    {
+      "name": "opcua_get_tag_asset_mapping",
+      "description": "Retrieve the tag-to-Equipment-ID mapping table entry for a given OPC-UA tag path or SAP PM equipment ID, used to contextualize raw tag names against maintenance-domain assets.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "tag_path": { "type": "string" },
+          "equipment_id": { "type": "string" }
+        }
+      }
+    }
+  ]
+}

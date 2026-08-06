@@ -1,0 +1,3 @@
+# Reference: Root Cause Analysis — Reusability Notes
+
+This RAG-grounded root-cause methodology is directly reusable by **Quality** for tracing non-conformance root causes against historical CAPA (Corrective and Preventive Action) reports, and by **EHS** for incident investigation grounded in historical safety incident reports and regulatory guidance. The core mechanism — retrieve comparable structured incident history, build an evidence-limited causal chain, and refuse to extend beyond supported evidence — transfers directly; only the underlying document corpus and equipment/process taxonomy change.

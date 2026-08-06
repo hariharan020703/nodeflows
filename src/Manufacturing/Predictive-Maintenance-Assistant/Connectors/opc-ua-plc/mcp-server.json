@@ -1,0 +1,6 @@
+{
+  "type": "url",
+  "url": "https://mcp.internal.company.com/opc-ua-plc",
+  "name": "opc-ua-plc",
+  "authorization_token": "${OPC_UA_PLC_MCP_TOKEN}"
+}

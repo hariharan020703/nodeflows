@@ -2,31 +2,23 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { DEFAULT_BG, DEPARTMENTS, WHEEL_RADIUS, getBranches } from './data.js'
 import { svgIcon } from './icons.js'
 import { WHEEL_LABEL_OFFSET, getWheelTree } from './wheelData.js'
+import { RepoFan, RepoSidebar } from './RepoTree.jsx'
+import { collectJsonFiles, layoutRepo } from './repoData.js'
+import { ArrowLeft } from 'lucide-react'
+import { cn } from '../lib/utils.js'
 import './SkillTree.css'
 
-// Two views, and one growing tree inside the second:
-//   'wheel' -> the hub + 7 orbiting department mini-trees (html1.html, verbatim geometry)
-//   'fan'   -> that department's details tree: the root badge plus ONE node per branch.
-//              Clicking a branch grows its agent; clicking the agent grows three facet nodes
-//              (skills / connectors / artifacts); clicking a facet opens the sidebar.
-// The wheel geometry is unchanged from the capture. The details tree used to be a chain of job
-// nodes per branch (html2/html3); those jobs are now the skills of the branch's agent.
+// Manufacturing's details view is driven by the real src/Manufacturing folder (see repoData.js)
+// instead of the hand-authored branch/agent data every other department uses. Matched on name, not
+// key, so it survives the key being renamed. The other six are untouched.
+const MFG_KEY = DEPARTMENTS.find((d) => d.name === 'Manufacturing')?.key
 const ZOOM_MIN = 0.4
 const ZOOM_MAX = 3
 const ZOOM_STEP = 0.2
 const DEPT_STEP = 360 / DEPARTMENTS.length
 
-// Diameter of a department's main badge circle. Lives here rather than in CSS because the
-// hover wedge's apex has to start just outside it — as a bare number in the CSS the two would
-// drift apart and the wedge would end up buried inside the badge.
 const DEPT_BADGE_SIZE = 144
 
-// Vertical framing for the wheel. The usable band runs from under the top bar down to the
-// rotate chevrons at bottom 8.5%, and the hub is centred in that band. Left at the CSS 56%
-// anchor the entire upper half of the screen went unused and the wheel had only ~35% of the
-// viewport height to grow into — centring it is where most of the extra size comes from.
-// hubScreenCenter() reads the same figure; if the two disagree, drag-rotation pivots around
-// the wrong point.
 const TOPBAR_H = 110
 const CHEVRON_TOP = 0.915
 
@@ -35,10 +27,6 @@ function wheelBand(h) {
   return { centre: (TOPBAR_H + bottom) / 2, room: (bottom - TOPBAR_H) / 2 }
 }
 
-// World radius the wheel must fit, out through the badge ring and branch tips to the name
-// label. Vertically the labels overhang their anchor by about half a name block; horizontally
-// by the widest sub-label's half-width — without that second term the left/right department
-// names get clipped off the edge of a narrow window.
 const LABEL_HALF_H = 66
 const LABEL_HALF_W = 330
 const WHEEL_WORLD_V = WHEEL_RADIUS + WHEEL_LABEL_OFFSET + LABEL_HALF_H
@@ -50,15 +38,6 @@ function fitWheelScale(w, h) {
   return Math.max(0.2, Math.min(0.62, fit))
 }
 
-// --- Branch growth: branch -> its agent -> the agent's three facets ---
-// The details view starts as the root badge plus one node per branch. Clicking a branch grows its
-// agent straight on along that branch's own outward direction; clicking the agent grows three
-// facet nodes fanned off it. Each level keeps going the way the last edge pointed, so the whole
-// thing reads as the same branch continuing to grow rather than clusters dropped nearby.
-// Both edges are longer than the root -> branch spokes: growth should feel like the branch
-// pushing well clear of the ring, not a short stub. FACET_SPREAD is wide enough that adjacent
-// facet labels can't touch — at 620 units out, 58° puts ~600 units between neighbouring centres,
-// against a ~490-unit label width for the longest ("CONNECTORS").
 const AGENT_DIST = 620
 const FACET_DIST = 620
 const FACET_SPREAD = 58
@@ -69,27 +48,12 @@ const AGENT_FACETS = [
   { key: 'artifacts', label: 'Artifacts', icon: 'facetArtifacts' },
 ]
 
-// Width of the facet sidebar. Also the amount the canvas shifts when it opens, so the node you
-// just clicked doesn't end up underneath the panel — must match .st-side's width in the CSS.
 const SIDEBAR_W = 400
 
-// Render scale for the details tree, one step per depth: the ring alone, a branch open (out to
-// its agent), and the agent open (out to the facets). Each step pulls back just far enough for
-// the newly grown level to fit. Node label sizes in the CSS are tuned against these three
-// numbers — they are world units, so changing a zoom here changes what every label measures on
-// screen. Keep the two in step.
-// The two open states frame the expansion itself (centred between the branch and the deepest
-// node), not the whole tree, so they can sit much closer in than a whole-tree fit would allow —
-// the root badge and the far side of the ring simply fall out of frame, which is the point.
 const DETAIL_ZOOM = { branches: 0.38, branchOpen: 0.34, agentOpen: 0.28 }
 
-// Vertical middle of the branch-ring view in world units. The ring grows upward from the root
-// badge at (0,0), so its visual centre is well above the origin; without this the tree renders
-// low and clipped at the top.
 const DETAIL_CENTRE_Y = 390
 
-// Places `count` children on an arc centred on dirAngle, so an odd count keeps one child dead
-// ahead of the branch and the rest splay symmetrically either side of it.
 function fanOut(origin, dirAngle, count, dist, spreadDeg) {
   return Array.from({ length: count }, (_, i) => {
     const a = dirAngle + (((i - (count - 1) / 2) * spreadDeg * Math.PI) / 180)
@@ -130,6 +94,10 @@ export default function SkillTree() {
   const [selected, setSelected] = useState(null)
   const [agentOpen, setAgentOpen] = useState(false)
   const [facetKey, setFacetKey] = useState(null)
+  // Manufacturing only: the chain of open folders, and which node's sidebar is showing. Held as a
+  // path of names rather than node objects so it stays valid across rebuilds of the folder tree.
+  const [repoPath, setRepoPath] = useState([])
+  const [repoSidebar, setRepoSidebar] = useState(null)
   const [zoom, setZoom] = useState(1)
   const [pan, setPan] = useState({ x: 0, y: 0 })
   const [wheelRotation, setWheelRotation] = useState(0)
@@ -160,9 +128,6 @@ export default function SkillTree() {
     clearTimeout(revealTimerRef.current)
   }, [])
 
-  // Reset pan whenever the view/department/selection changes (adjusting state
-  // during render, per React's guidance, instead of an effect that would cause
-  // an extra render pass).
   const panResetKey = `${view}|${deptKey}|${selected ? selected.name : ''}`
   const [prevPanKey, setPrevPanKey] = useState(panResetKey)
   if (prevPanKey !== panResetKey) {
@@ -170,17 +135,13 @@ export default function SkillTree() {
     if (pan.x !== 0 || pan.y !== 0) setPan({ x: 0, y: 0 })
   }
 
-  // The hub sits at #st-world's local (0,0); #st-world is anchored at 50%/56% of the
-  // (fixed, full-viewport) app root, so that's the on-screen center to rotate the drag
-  // angle around.
   function hubScreenCenter() {
-    // Must match where the wheel's ty actually puts the hub, not #st-world's CSS anchor —
-    // a mismatch shows up as drag-rotation pivoting around the wrong point.
+
     return { x: viewport.w * 0.5, y: wheelHubY }
   }
 
   function onWorldPointerDown(e) {
-    if (e.target.closest('button, textarea, a, input, .st-side')) return
+    if (e.target.closest('button, textarea, a, input, .st-side, .st-zip-bar')) return
     if (view === 'wheel') {
       const c = hubScreenCenter()
       const angle = (Math.atan2(e.clientY - c.y, e.clientX - c.x) * 180) / Math.PI
@@ -239,6 +200,34 @@ export default function SkillTree() {
   }
 
   const dept = DEPARTMENTS.find((d) => d.key === deptKey)
+  const isMfg = deptKey === MFG_KEY
+  // Laid out here rather than inside RepoFan because the framing below needs the same geometry to
+  // decide what to hold in view.
+  const repoLayout = useMemo(() => (isMfg ? layoutRepo(repoPath) : null), [isMfg, repoPath])
+
+  // A folder click walks the open chain to that depth; clicking the already-open folder collapses
+  // back to its parent. If the node (file or folder) contains files, open the sidebar popup.
+  function pickRepoNode(n) {
+    if (n.node.type === 'file') {
+      setRepoSidebar(n.path)
+      return
+    }
+    const alreadyOpen = repoPath[n.depth] === n.node.name
+    setRepoPath(alreadyOpen ? repoPath.slice(0, n.depth) : [...repoPath.slice(0, n.depth), n.node.name])
+
+    const mdFiles = (n.node.files || []).filter((f) => f.ext === 'md')
+    const jsonItems = collectJsonFiles(n.node)
+    if (mdFiles.length > 0 || jsonItems.length > 0) {
+      setRepoSidebar(n.path)
+    } else {
+      setRepoSidebar(null)
+    }
+  }
+  function collapseRepo() {
+    setRepoPath([])
+    setRepoSidebar(null)
+  }
+
   const branches = useMemo(() => getBranches(deptKey), [deptKey])
   const branch = selected ? branches.find((b) => b.key === selected) : null
   const growth = useMemo(() => buildGrowth(branch, agentOpen), [branch, agentOpen])
@@ -270,12 +259,7 @@ export default function SkillTree() {
   const nextDept = DEPARTMENTS[(deptIdx + 1) % DEPARTMENTS.length]
 
   function openDept(key) {
-    // Three clean phases, never overlapping: 1) spin the wheel ring 180° clockwise
-    // while still showing the wheel, 2) hold there for a beat once it settles, so
-    // the rotation reads as its own moment rather than rushing straight on, then
-    // 3) swap to the fan view and let its own zoom-in transition play. Doing the
-    // swap immediately would mean the fan content renders mid-spin (briefly
-    // upside down/mirrored) instead of a smooth, single-direction motion.
+
     if (entering) return
     setEntering(true)
     setBranchesRevealed(false)
@@ -286,6 +270,7 @@ export default function SkillTree() {
       enterTimerRef.current = setTimeout(() => {
         setDeptKey(key)
         setSelected(null)
+        collapseRepo()
         setView('fan')
         setPendingDeptKey(null)
         setFanSlide({ x: 0, scale: 1, opacity: 1, animate: false })
@@ -298,11 +283,7 @@ export default function SkillTree() {
   }
 
   function navigateDept(key, dir) {
-    // Three smooth beats instead of an instant swap: 1) the current department
-    // recedes backward (shrinks + fades) rather than just sliding off, 2) the new
-    // one enters from the side and grows up to full size ("frontside"), 3) only
-    // once its root badge is at rest do the branches draw themselves in, after a
-    // short pause.
+
     if (entering) return
     setEntering(true)
     setBranchesRevealed(false)
@@ -310,6 +291,7 @@ export default function SkillTree() {
     slideTimerRef.current = setTimeout(() => {
       setDeptKey(key)
       setSelected(null)
+      collapseRepo()
       setFanSlide({ x: dir * 100, scale: 0.7, opacity: 0, animate: false })
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
@@ -327,34 +309,45 @@ export default function SkillTree() {
 
   function backToWheel() {
     setSelected(null)
+    collapseRepo()
     setView('wheel')
   }
 
   let tx, ty, baseScale
   if (view === 'wheel') {
     tx = 0
-    // #st-world is anchored at top: 56%, so this is the shift that lands the hub on
-    // wheelHubY, the centre of the usable band.
+
     ty = wheelHubY - viewport.h * 0.56
     baseScale = wheelScale
-  } else if (!selected) {
-    // The branch ring reaches ~700 units plus its labels, where the old job-chain fan reached
-    // ~1900 — so it needs a much larger scale than the 0.26 inherited from that fan, which is
-    // what made every label look shrunken. Centred on the tree's own middle (the ring sits above
-    // the root badge, so that middle is well above the origin) rather than a magic offset.
+  } else if (isMfg && repoLayout.focus && repoLayout.focus.kids) {
+    // Manufacturing's levels vary from 2 children to a dozen, and the layout spreads wide ones
+    // further out to keep them apart — so a fixed zoom per depth would either clip a wide folder or
+    // waste the window on a narrow one. Fit the newest level instead, floored so labels stay
+    // readable (the zoom control and drag-pan cover anything past that).
+    const { parent, kids } = repoLayout.focus
+    const pts = [parent, ...kids]
+    const pad = 320
+    const minX = Math.min(...pts.map((p) => p.left)) - pad
+    const maxX = Math.max(...pts.map((p) => p.left)) + pad
+    const minY = Math.min(...pts.map((p) => p.top)) - pad
+    const maxY = Math.max(...pts.map((p) => p.top)) + pad
+    const roomV = wheelBand(viewport.h).room * 2
+    const roomH = viewport.w - 48
+    baseScale = Math.max(0.13, Math.min(0.34, Math.min(roomV / (maxY - minY), roomH / (maxX - minX))))
+    tx = -((minX + maxX) / 2) * baseScale
+    ty = wheelHubY - viewport.h * 0.56 - ((minY + maxY) / 2) * baseScale
+  } else if (!selected || isMfg) {
+
     tx = 0
     ty = wheelHubY - viewport.h * 0.56 + DETAIL_CENTRE_Y * DETAIL_ZOOM.branches
     baseScale = DETAIL_ZOOM.branches
   } else {
-    // Frame the deepest thing that's grown, pulling back a step per level so the new nodes have
-    // room to appear instead of pushing off screen.
+
     const deepest = agentOpen && growth.facets
       ? growth.facets[Math.floor(growth.facets.length / 2)]
       : (agentOpen ? growth.agent : branch)
     const nodeZoom = agentOpen ? DETAIL_ZOOM.agentOpen : DETAIL_ZOOM.branchOpen
-    // Centre between the branch and the deepest node, so the branch that got you there stays in
-    // frame rather than the view jumping to the tip alone. Shifted left when the sidebar is open
-    // so the panel doesn't cover what you just clicked.
+
     const cx = (branch.left + deepest.left) / 2
     const cy = (branch.top + deepest.top) / 2
     tx = -cx * nodeZoom + (facetKey ? -SIDEBAR_W / 2 : 0)
@@ -366,9 +359,6 @@ export default function SkillTree() {
     transition: dragging ? 'none' : undefined,
   }
 
-  // While a department is being picked the view is still the wheel, but we switch the
-  // backdrop to the incoming department immediately, so its crossfade runs *under* the
-  // ring spin instead of starting after it — one continuous motion rather than two.
   const pendingDept = pendingDeptKey ? DEPARTMENTS.find((d) => d.key === pendingDeptKey) : null
   const activeBg = view === 'fan' ? dept.bg : (pendingDept ? pendingDept.bg : DEFAULT_BG)
 
@@ -399,19 +389,30 @@ export default function SkillTree() {
                 : 'none',
             }}
           >
-            <Fan
-              key={dept.key}
-              dept={dept}
-              branches={branches}
-              selected={selected}
-              growth={growth}
-              agentOpen={agentOpen}
-              facetKey={facetKey}
-              onPickBranch={pickBranch}
-              onToggleAgent={toggleAgent}
-              onPickFacet={pickFacet}
-              revealed={branchesRevealed}
-            />
+            {isMfg ? (
+              <RepoFan
+                key={dept.key}
+                dept={dept}
+                openPath={repoPath}
+                filePath={repoSidebar}
+                onPickNode={pickRepoNode}
+                revealed={branchesRevealed}
+              />
+            ) : (
+              <Fan
+                key={dept.key}
+                dept={dept}
+                branches={branches}
+                selected={selected}
+                growth={growth}
+                agentOpen={agentOpen}
+                facetKey={facetKey}
+                onPickBranch={pickBranch}
+                onToggleAgent={toggleAgent}
+                onPickFacet={pickFacet}
+                revealed={branchesRevealed}
+              />
+            )}
           </div>
         )}
       </div>
@@ -436,21 +437,31 @@ export default function SkillTree() {
         </>
       )}
 
-      {/* The canvas carries the structure, the sidebar carries the words. It opens only at the
-          last level — clicking one of the three facet nodes — so the earlier steps stay a pure
-          tree and nothing covers the canvas until there's a list to read. */}
-      {openFacet && (
+      {!isMfg && openFacet && (
         <FacetSidebar
           facet={openFacet}
           agent={growth.agent}
-          branch={branch}
           dept={dept}
           onClose={() => setFacetKey(null)}
         />
       )}
 
-      {view === 'fan' && selected && (
+      {/* Manufacturing's sidebar takes a path — a folder shows its files and the .json export, a
+          file shows its contents. Same .st-side panel the other departments use. */}
+      {isMfg && view === 'fan' && repoSidebar && (
+        <RepoSidebar
+          key={repoSidebar}
+          dept={dept}
+          path={repoSidebar}
+          onClose={() => setRepoSidebar(null)}
+        />
+      )}
+
+      {!isMfg && view === 'fan' && selected && (
         <button className="st-collapse" onClick={collapseAll}>× COLLAPSE {branch.name.toUpperCase()}</button>
+      )}
+      {isMfg && view === 'fan' && repoPath.length > 0 && (
+        <button className="st-collapse" onClick={collapseRepo}>× COLLAPSE {repoPath[repoPath.length - 1].replace(/\.[^/.]+$/, '').toUpperCase()}</button>
       )}
 
       {view === 'wheel' && (
@@ -473,11 +484,6 @@ export default function SkillTree() {
   )
 }
 
-// Every backdrop that can ever be shown, deduped (DEFAULT_BG may double as a
-// department's image). All layers are mounted at once and switched purely by opacity:
-// that gives an instant, flash-free crossfade, and because a layer at opacity 0 still
-// has its background-image fetched, mounting them *is* the preload — no separate
-// warm-up pass to keep in sync.
 const BG_LAYERS = [...new Set([DEFAULT_BG, ...DEPARTMENTS.map((d) => d.bg)])]
 
 function Backdrop({ activeBg }) {
@@ -488,10 +494,7 @@ function Backdrop({ activeBg }) {
         const image = `url("${encodeURI(src)}")`
         return (
           <div key={src} className={`st-bg-layer ${src === activeBg ? 'on' : ''}`}>
-            {/* The art occupies only the left portion of each source image, so each half
-                of the screen renders that same left portion and the right one is mirrored.
-                That frames both edges symmetrically and leaves the middle — where the hub
-                and labels sit — clear, instead of loading all the art onto one side. */}
+
             <div className="st-bg-half st-bg-half-l" style={{ backgroundImage: image }} />
             <div className="st-bg-half st-bg-half-r" style={{ backgroundImage: image }} />
           </div>
@@ -502,9 +505,6 @@ function Backdrop({ activeBg }) {
   )
 }
 
-// Departments overview only. Deliberately NOT rendered by TopBar below, so it stays off the
-// department-detail view and off the open card.
-// TODO: replace the alt text with the actual brand name.
 function Logo() {
   return <img className="st-logo" src="/logo.svg" alt="Company logo" />
 }
@@ -525,14 +525,27 @@ function WheelTopBar() {
   )
 }
 
-// Department-detail (fan) view — rendered whenever view === 'fan', which is also the only
-// state in which the card can be open. No <Logo /> here, by design.
+
 function TopBar({ onBack }) {
   return (
-    <div className="st-topbar">
-      <div className="st-tb-left">
-        <button className="st-back" onClick={onBack}>← ALL DEPARTMENTS</button>
-      </div>
+    <div className="fixed top-6 left-6 z-30 pointer-events-auto">
+      <button
+        onClick={onBack}
+        className={cn(
+          "group flex items-center gap-2.5 px-4 py-2 rounded-full transition-all duration-300 cursor-pointer select-none",
+          "bg-white/80 hover:bg-white/95 text-slate-800 hover:text-slate-950",
+          "border border-slate-200/80 hover:border-slate-300/90",
+          "shadow-[0_4px_20px_-4px_rgba(15,30,77,0.12)] hover:shadow-[0_8px_25px_-4px_rgba(15,30,77,0.22)]",
+          "backdrop-blur-xl hover:scale-105 active:scale-95"
+        )}
+      >
+        <span className="grid h-6 w-6 place-items-center rounded-full bg-slate-100 group-hover:bg-slate-900 group-hover:text-white transition-colors duration-300 text-slate-600">
+          <ArrowLeft className="h-3.5 w-3.5 stroke-[2.5] transition-transform duration-300 group-hover:-translate-x-0.5" />
+        </span>
+        <span className="font-sans text-[11px] font-extrabold uppercase tracking-[0.14em]">
+          All Departments
+        </span>
+      </button>
     </div>
   )
 }
@@ -586,11 +599,6 @@ function Stars() {
   ))
 }
 
-// Neural-network-style particle mesh: a dense cloud of dots, each linked to its 1-2
-// nearest neighbors, rather than a fixed branch/trunk structure.
-// Globe-like core: a dense speckle of fine dots, each wired to its nearest neighbours so the
-// whole thing reads as one connected mesh rather than loose confetti. HUB_CORE_R is the
-// particle radius in world units; .st-hub-core's box is sized from it.
 export const HUB_CORE_R = 168
 const HUB_DOTS = 820
 
@@ -606,8 +614,7 @@ const HUB_CORE = (() => {
     dust.push({ x: Math.cos(angle) * dist, y: Math.sin(angle) * dist, r: 0.5 + rnd() * 1.5, color, opacity: 0.3 + rnd() * 0.55 })
   }
   const links = []
-  // Scaled with the radius so the mesh keeps the same visual density as it grows; up to 3
-  // links per dot (was 2) makes the web read as a network rather than short dashes.
+
   const maxDist = HUB_CORE_R * 0.13
   dust.forEach((p, i) => {
     const best = []
@@ -647,11 +654,7 @@ function HubCore() {
   )
 }
 
-// Per spoke: a little train of dots flowing between the department and the hub,
-// mixing small/medium/big sizes and both directions instead of just two dots.
-// Generated rather than hand-listed so the count is one number. Sizes, speeds, directions and
-// start offsets are all staggered by index, giving a continuous two-way traffic of signals
-// along every spoke instead of a few sparse blips.
+
 const SPOKE_DOT_COUNT = 16
 const SPOKE_DOTS = Array.from({ length: SPOKE_DOT_COUNT }, (_, i) => {
   const t = i / SPOKE_DOT_COUNT
@@ -723,9 +726,6 @@ function Hub({ onOpen, rotation, spinning, pendingKey }) {
   )
 }
 
-// A pie-slice-shaped hover/click target, apex at the department's own badge and
-// opening outward (away from the hub), so hovering the branch tips or the empty
-// space near the label still counts as hovering that whole department.
 function wedgePoints(angle, r0, r1, halfWidthDeg) {
   const halfWidthRad = (halfWidthDeg * Math.PI) / 180
   const a1 = angle - halfWidthRad
@@ -787,12 +787,9 @@ function Mini({ dept, onOpen, ringRotation, picked }) {
   )
 }
 
-// The department details tree. Starts as the root badge plus one node per branch; a branch grows
-// its agent when clicked, and the agent grows the three facet nodes. Every edge uses the same
-// .st-drawline class, so a level that mounts draws itself on exactly like the original branches.
+
 function Fan({ dept, branches, selected, growth, agentOpen, facetKey, onPickBranch, onToggleAgent, onPickFacet, revealed }) {
-  // Grown nodes sit outside the branch ring, so they have to be inside the bounds the line <svg>
-  // is sized from or their edges get clipped.
+
   const grown = growth ? [growth.agent, ...(growth.facets || [])] : []
   const xs = [0, ...branches.map((b) => b.left), ...grown.map((g) => g.left)]
   const ys = [0, ...branches.map((b) => b.top), ...grown.map((g) => g.top)]
@@ -898,13 +895,12 @@ function Fan({ dept, branches, selected, growth, agentOpen, facetKey, onPickBran
 
 // Opened by clicking one of the three facet nodes — the only place in this flow that shows a
 // list, since the three levels before it are all structure the tree can carry itself.
-function FacetSidebar({ facet, agent, branch, dept, onClose }) {
+function FacetSidebar({ facet, agent, dept, onClose }) {
   const items = agent[facet.key]
   return (
     <aside className="st-side" style={{ '--c': dept.color }}>
       <button className="st-side-x" onClick={onClose} aria-label="close">×</button>
       <div className="st-side-body">
-        <div className="st-side-crumb">{dept.name} · {branch.name} · {agent.name}</div>
         <div className="st-side-title">
           <span className="st-side-icon" dangerouslySetInnerHTML={{ __html: svgIcon(facet.icon) }} />
           <span className="st-side-name">{facet.label}</span>
@@ -936,7 +932,7 @@ function FacetSidebar({ facet, agent, branch, dept, onClose }) {
                 <span className="st-dl-tag">LOCKED · TAP TO PREVIEW</span>
               </div>
               <p className="st-dld">{agent.desc}</p>
-              <code className="st-dl-file">skills/{agent.file}</code>
+              <code className="st-dl-file">skills/{agent.file ? agent.file.replace(/\.md$/i, '') : ''}</code>
             </div>
             <div className="st-side-cta">
               <button className="st-skbuy" disabled>Get Access · $49/mo</button>

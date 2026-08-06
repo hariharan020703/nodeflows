@@ -1,0 +1,59 @@
+{
+  "tools": [
+    {
+      "name": "mes_list_downtime_events",
+      "description": "Retrieve MES-logged downtime events (reason code, start/end time, duration) for a line and/or equipment within a time window, used to reconstruct a timeline around a breakdown.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "line": { "type": "string" },
+          "equipment_id": { "type": "string" },
+          "from": { "type": "string", "description": "ISO-8601 start of range" },
+          "to": { "type": "string", "description": "ISO-8601 end of range" }
+        },
+        "required": ["from", "to"]
+      }
+    },
+    {
+      "name": "mes_get_production_order_execution",
+      "description": "Retrieve actual run data (order number, product, start/end time, actual quantity, scrap quantity) against a production order for a line within a time window.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "line": { "type": "string" },
+          "order_no": { "type": "string" },
+          "from": { "type": "string" },
+          "to": { "type": "string" }
+        },
+        "required": ["from", "to"]
+      }
+    },
+    {
+      "name": "mes_get_shift_operator_log",
+      "description": "Retrieve shift and operator log entries (shift ID, operator ID, line, start/end time) for a line within a time window, used as contextual (non-causal) evidence.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "line": { "type": "string" },
+          "from": { "type": "string" },
+          "to": { "type": "string" }
+        },
+        "required": ["line", "from", "to"]
+      }
+    },
+    {
+      "name": "mes_list_quality_events",
+      "description": "Retrieve in-line quality flags/holds (order number, defect code, quantity affected, timestamp) for a line or order within a time window.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "line": { "type": "string" },
+          "order_no": { "type": "string" },
+          "from": { "type": "string" },
+          "to": { "type": "string" }
+        },
+        "required": ["from", "to"]
+      }
+    }
+  ]
+}

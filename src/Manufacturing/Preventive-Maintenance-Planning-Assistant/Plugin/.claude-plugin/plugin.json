@@ -1,0 +1,10 @@
+{
+  "name": "preventive-maintenance-planner",
+  "version": "1.0.0",
+  "description": "Generates optimized preventive maintenance schedules by jointly constraining machine runtime, OEM service intervals, production plan commitments, and technician availability, then assigns technicians, generates checklists, and publishes approved schedules with full audit traceability.",
+  "author": { "name": "GWC Manufacturing AI Accelerator Library" },
+  "license": "Proprietary",
+  "keywords": ["maintenance", "preventive-maintenance", "manufacturing", "scheduling"],
+  "skills": "../Skills",
+  "mcpServers": "./.mcp.json"
+}

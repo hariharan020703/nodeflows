@@ -1,0 +1,88 @@
+{
+  "tools": [
+    {
+      "name": "sap_pm_get_equipment",
+      "description": "Retrieve SAP PM equipment master data (description, functional location, object type, manufacturer, serial number, warranty dates) by equipment ID or functional location.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "equipment_id": { "type": "string" },
+          "functional_location": { "type": "string" }
+        }
+      }
+    },
+    {
+      "name": "sap_pm_list_notifications",
+      "description": "List SAP PM maintenance notifications for an equipment ID or functional location within a date range, including breakdown flag, malfunction start/end, and damage code.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "equipment_id": { "type": "string" },
+          "functional_location": { "type": "string" },
+          "from": { "type": "string", "description": "ISO-8601 start of range" },
+          "to": { "type": "string", "description": "ISO-8601 end of range" },
+          "breakdown_only": { "type": "boolean" }
+        },
+        "required": ["from", "to"]
+      }
+    },
+    {
+      "name": "sap_pm_list_orders",
+      "description": "List SAP PM maintenance orders (order type, priority, planned/actual dates, operations, confirmations) for an equipment ID or functional location within a date range.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "equipment_id": { "type": "string" },
+          "functional_location": { "type": "string" },
+          "from": { "type": "string" },
+          "to": { "type": "string" }
+        },
+        "required": ["from", "to"]
+      }
+    },
+    {
+      "name": "sap_pm_get_breakdown_history",
+      "description": "Retrieve MTBF, MTTR, downtime hours, and cost history for an equipment ID from the PM Info System, to determine whether an incident represents a repeat failure.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "equipment_id": { "type": "string" }
+        },
+        "required": ["equipment_id"]
+      }
+    },
+    {
+      "name": "sap_pm_create_notification",
+      "description": "Create a SAP PM maintenance notification for a breakdown or observed issue. Requires human approval before submission; stages the notification and returns a confirmation payload rather than committing irreversibly.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "equipment": { "type": "string" },
+          "functional_location": { "type": "string" },
+          "notification_type": { "type": "string", "enum": ["M1", "M2", "M3"] },
+          "short_text": { "type": "string" },
+          "malfunction_start_date": { "type": "string" },
+          "breakdown_indicator": { "type": "boolean" },
+          "priority": { "type": "string" }
+        },
+        "required": ["equipment", "notification_type", "short_text"]
+      }
+    },
+    {
+      "name": "sap_pm_append_completion_note",
+      "description": "Append an approved root cause and corrective action summary as a completion note to an existing maintenance notification/work order. Requires explicit human (maintenance engineer) approval prior to invocation; never closes the notification or changes equipment master data.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "notification_id": { "type": "string" },
+          "order_id": { "type": "string" },
+          "root_cause_summary": { "type": "string" },
+          "corrective_action_summary": { "type": "string" },
+          "approved_by": { "type": "string" },
+          "request_id": { "type": "string", "description": "Idempotency key to prevent duplicate write-back on retry" }
+        },
+        "required": ["notification_id", "root_cause_summary", "corrective_action_summary", "approved_by", "request_id"]
+      }
+    }
+  ]
+}

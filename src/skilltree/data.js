@@ -1,32 +1,10 @@
-// Department wheel positions, colors and hub icons below are copied verbatim (same px offsets,
-// same hex colors, same icon path data) from the SingleFile capture of the live wheel
-// (html1.html). Sales' fan layout, node coordinates, icons and the "ICP Definition" card copy
-// are copied verbatim from html2.html / html3.html. Everything else (the other 6 departments'
-// team/job/card content and their fan-node coordinates) is original placeholder content in the
-// same schema, since the captured pages never expanded those departments.
-
-// Wheel positions are computed from each department's index/count below, rather
-// than hardcoded per-department, so adding/removing a department here is all
-// that's needed to reflow the whole wheel evenly. (Radius matches the original
-// verbatim capture: Sales sat at exactly (0, 310).)
-// Distance from the hub out to each department badge — i.e. the length of the main spoke
-// edge. Exported because the wheel's on-screen fit is computed from it.
-// Pulled in from 400: with the fans narrowed by ANGLE_SQUEEZE they only span ~36deg, so a
-// tighter ring still leaves ~12deg of clear air between departments and buys render scale
-// (everything on the wheel is drawn in world units and multiplied by that scale).
 export const WHEEL_RADIUS = 390
 
-// Backdrop art, served from public/ (so these are absolute URLs from the site root).
-// `DEFAULT_BG` is what the wheel/overview shows; each department below names its own
-// image via `bg`, and the backdrop crossfades between them. Reassign freely — the only
-// rule is that every path here must exist in public/. Filenames contain spaces, which
-// the Backdrop component URL-encodes, so they can be left exactly as delivered.
-// Currently unused and available: 'Generated image 10/11/12.png'.
 export const DEFAULT_BG = '/Generated image 10.png'
 
 const DEPARTMENTS_BASE = [
   { key: 'sales', name: 'Sales', sub: 'targeting · outreach · sequencing', color: '#FF9D5C', icon: 'deptSales', bg: '/Generated image 3.png' },
-  { key: 'deals', name: 'Deals', sub: 'replies · calls · closing · pipeline', color: '#EF4444', icon: 'deptDeals', bg: '/Generated image 4.png' },
+  { key: 'deals', name: 'Manufacturing', sub: 'replies · calls · closing · pipeline', color: '#EF4444', icon: 'deptDeals', bg: '/Generated image 4.png' },
   { key: 'marketing', name: 'Marketing', sub: 'content · brand · distribution', color: '#A78BFA', icon: 'deptMarketing', bg: '/Generated image 5.png' },
   { key: 'operations', name: 'Operations', sub: 'onboarding · builds · client ops', color: '#5EEAD4', icon: 'deptOperations', bg: '/Generated image 6.png' },
   { key: 'intelligence', name: 'Intelligence', sub: 'companies · people · markets', color: '#7DD3FC', icon: 'deptIntelligence', bg: '/Generated image 7.png' },
@@ -109,15 +87,6 @@ function placeholderCard(node, dept) {
   }
 }
 
-// --- Branch agents: the levels that grow out of a branch node when you click it ---
-// A department's details view shows ONE node per branch (per team). Clicking it sprouts that
-// branch's agent; clicking the agent sprouts its three facets:
-//   skills     · what the agent can do — the team's jobs, which are exactly its capabilities
-//   connectors · the outside systems it reads from / writes to
-//   artifacts  · what it produces, and where that lands
-// Connectors and artifacts are derived deterministically from the team name, so a branch always
-// shows the same thing across renders. Swap these generators for real data later — the UI reads
-// only the shape, not the source.
 const CONNECTOR_POOL = {
   sales: [['HubSpot', 'CRM'], ['Apollo', 'Data'], ['Gmail', 'Email'], ['LinkedIn', 'Social'], ['Clay', 'Enrichment']],
   deals: [['HubSpot', 'CRM'], ['Gong', 'Calls'], ['DocuSign', 'E-sign'], ['Slack', 'Chat'], ['Stripe', 'Billing']],
@@ -149,13 +118,9 @@ function pickConnectors(deptKey, seed) {
   })
 }
 
-// A branch's single agent. Its skills are the team's own jobs — which is what they always were:
-// "Blog Drafting" is a thing the Content agent can do, not a separate box on the tree.
 function buildBranchAgent(team, jobs, dept) {
   const seed = hashName(team)
   const teamSlug = slugify(team)
-  // The most-used skill name across the team's jobs — the closest thing the data has to "who
-  // this branch's agent is", rather than inventing a name.
   const counts = {}
   jobs.forEach((j) => { counts[j.skill] = (counts[j.skill] || 0) + 1 })
   const name = Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0]
@@ -167,8 +132,6 @@ function buildBranchAgent(team, jobs, dept) {
     status: branchStatus(jobs),
     desc: `Runs ${dept.name}'s ${team.toLowerCase()} work end to end · ${jobs.length} skill${jobs.length > 1 ? 's' : ''} across ${team.toLowerCase()}.`,
     file: lead.file,
-    // One skill per job, carrying that job's own status and card copy, so nothing that used to be
-    // on the tree is lost — it moved one level in.
     skills: jobs.map((j) => ({ name: j.name, meta: j.status, status: j.status, desc: j.card.desc })),
     connectors: pickConnectors(dept.key, seed),
     artifacts: [
@@ -179,9 +142,6 @@ function buildBranchAgent(team, jobs, dept) {
   }
 }
 
-// A branch is as far along as its weakest job: all live -> live, none started -> not started,
-// anything in between -> in development. Showing "live" for a branch with unbuilt jobs inside
-// would be the one wrong answer here.
 function branchStatus(jobs) {
   if (jobs.every((j) => j.status === 'deployed')) return 'deployed'
   if (jobs.every((j) => j.status === 'plan')) return 'plan'
@@ -200,10 +160,6 @@ function buildSalesFan() {
     byTeam[n.team].push(n)
   })
   Object.values(byTeam).forEach((chain) => {
-    // `seg` = this line's (and its destination node's) position along its own
-    // chain (0 = leaves the root). All chains start together and draw outward in
-    // lockstep, segment by segment — each node popping in right as its own
-    // incoming line finishes — rather than every node appearing at once.
     chain[0].seg = 0
     lines.push({ x1: 0, y1: 0, x2: chain[0].left, y2: chain[0].top, seg: 0 })
     for (let i = 1; i < chain.length; i++) {
@@ -211,11 +167,6 @@ function buildSalesFan() {
       lines.push({ x1: chain[i - 1].left, y1: chain[i - 1].top, x2: chain[i].left, y2: chain[i].top, seg: i })
     }
   })
-  // The real captured label coordinates (salesTeamLabels) sit ~250-300px past the
-  // last node — a gap that reads fine at native size but doubles into a much
-  // bigger empty stretch once LENGTH_SCALE stretches the whole fan out. Anchor
-  // the label to the actual last node's direction/reach instead, with the same
-  // fixed gap the placeholder departments use, so Sales matches everyone else.
   const teams = Object.entries(byTeam).map(([name, chain]) => {
     const last = chain[chain.length - 1]
     const angle = Math.atan2(last.top, last.left)
@@ -274,9 +225,6 @@ const PLACEHOLDER_TEAMS = {
 const STATUS_CYCLE = ['deployed', 'deployed', 'dev', 'deployed', 'plan']
 const ICON_CYCLE = ['target', 'compass', 'check', 'briefcase', 'mail', 'mega', 'search', 'users', 'gear', 'chart', 'book', 'spark', 'phone', 'video', 'shield', 'clock', 'rocket', 'heart', 'globe', 'doc', 'scale']
 
-// Generic team/job placeholder for any department key added without its own
-// PLACEHOLDER_TEAMS entry, so a new department renders a fan immediately —
-// add a real entry above (keyed by the department's `key`) for tailored copy.
 function defaultTeams(dept) {
   const n = dept.name
   return [
@@ -336,8 +284,6 @@ function buildPlaceholderFan(deptKey, dept) {
   return { nodes, lines, teams }
 }
 
-// Stretches every node/line/team-label radially outward from the root by this
-// factor, so edges read as longer without touching their stroke width.
 const LENGTH_SCALE = 1.8
 
 function scaleFan(fan) {
@@ -358,14 +304,8 @@ export function getFan(deptKey) {
   return scaled
 }
 
-// How far out from the root badge the branch nodes sit. One ring rather than each branch keeping
-// its old chain length, so the five nodes read as siblings — and so every branch has the same
-// clear space outward for its agent and facets to grow into.
 const BRANCH_RADIUS = 700
 
-// The details view's nodes: exactly one per branch (per team), in the fan's own angular order so
-// a department keeps the shape it had on the wheel. The team's jobs don't disappear — they become
-// the skills of that branch's agent.
 const BRANCH_CACHE = {}
 export function getBranches(deptKey) {
   if (BRANCH_CACHE[deptKey]) return BRANCH_CACHE[deptKey]
@@ -379,8 +319,7 @@ export function getBranches(deptKey) {
   })
 
   const branches = [...byTeam].map(([team, jobs]) => {
-    // Direction comes from the team's outermost job, which is the direction that chain was
-    // already heading — so the branch node lands where the eye expects that team to be.
+
     const tip = jobs[jobs.length - 1]
     const angle = Math.atan2(tip.top, tip.left)
     return {

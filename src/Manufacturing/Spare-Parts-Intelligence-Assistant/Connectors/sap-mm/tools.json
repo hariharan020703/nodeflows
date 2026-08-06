@@ -1,0 +1,67 @@
+{
+  "tools": [
+    {
+      "name": "sap_mm_get_material_master",
+      "description": "Retrieve SAP MM material master data (MM03 equivalent) by material number, including description, material group, base unit, and criticality class.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "material_id": { "type": "string" },
+          "plant": { "type": "string" }
+        },
+        "required": ["material_id"]
+      }
+    },
+    {
+      "name": "sap_mm_get_stock_overview",
+      "description": "Retrieve current stock overview (MMBE equivalent) for a material at a plant/storage location, including unrestricted stock, safety stock, and reorder point.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "material_id": { "type": "string" },
+          "plant": { "type": "string" },
+          "storage_location": { "type": "string" }
+        },
+        "required": ["material_id", "plant"]
+      }
+    },
+    {
+      "name": "sap_mm_get_vendor_master",
+      "description": "Retrieve vendor master data (XK03 equivalent) including lead time, rating, and preferred status for a given vendor number.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "vendor_id": { "type": "string" }
+        },
+        "required": ["vendor_id"]
+      }
+    },
+    {
+      "name": "sap_mm_get_purchase_order_status",
+      "description": "Retrieve purchase order status (ME23N equivalent) by PO number, including vendor, net price, delivery date, and status.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "po_number": { "type": "string" }
+        },
+        "required": ["po_number"]
+      }
+    },
+    {
+      "name": "sap_mm_create_purchase_requisition",
+      "description": "Stage a SAP MM purchase requisition (ME51N equivalent) for a spare-part procurement need. This tool only creates a draft requisition in the buyer's SAP workflow inbox and routes it to human approval before it can become a purchase order; it never releases a PO or commits spend directly. The service account used has no PO-release authority.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "material": { "type": "string" },
+          "plant": { "type": "string" },
+          "quantity": { "type": "number" },
+          "required_date": { "type": "string", "format": "date" },
+          "requester": { "type": "string" },
+          "justification": { "type": "string" }
+        },
+        "required": ["material", "plant", "quantity", "required_date", "requester", "justification"]
+      }
+    }
+  ]
+}

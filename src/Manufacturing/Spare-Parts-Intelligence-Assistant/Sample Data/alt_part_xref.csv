@@ -1,0 +1,21 @@
+original_material_id,alternative_id,alternative_source,compatibility_notes,similarity_score,embedding_match_basis
+SP-BRG-6205-2RS,SP-BRG-6205-2RS-C3,internal_master,Same bore/OD/width; C3 internal clearance variant approved for higher-temp conveyor duty,0.97,description + dimensional attributes
+SP-BRG-6205-2RS,VND-SKF-6205-2RSH,vendor_catalog,SKF cross-brand equivalent; identical ISO dimensions, double-sealed,0.95,description embedding + ISO dimension match
+SP-BRG-6308-2RS,VND-NTN-6308LLU,vendor_catalog,NTN cross-brand equivalent; same bore/OD/width, sealed variant,0.94,description embedding + ISO dimension match
+SP-SEAL-NBR-45x65x8,SP-SEAL-VITON-45x65x8,internal_master,Viton variant of same dimensions; use where fluid/temp exceeds NBR rating,0.90,dimensional match; material substitution flagged
+SP-BELT-A-42,VND-GATES-A42-HC,vendor_catalog,Gates high-capacity A42 equivalent; matching pitch length and profile,0.93,description embedding + profile/length match
+SP-FILT-HYD-10U,SP-FILT-HYD-10U-BETA,internal_master,Same micron rating, higher beta-ratio filtration efficiency element,0.92,description embedding + spec match
+SP-FILT-AIR-STD,VND-DONALDSON-P828889,vendor_catalog,Donaldson cross-reference panel filter, same frame dimensions,0.89,description embedding + dimensional match
+SP-SENS-PROX-M12,VND-BALLUFF-BES-M12,vendor_catalog,Balluff M12 inductive sensor, same NO output, same sensing range,0.91,description embedding + spec match
+SP-SENS-TEMP-PT100,VND-WIKA-PT100-4W,vendor_catalog,Wika 4-wire PT100 probe, equivalent accuracy class and output signal,0.88,description embedding + spec match
+SP-MOTOR-3PH-5HP,VND-WEG-5HP-TEFC,vendor_catalog,WEG TEFC motor, same HP/RPM/frame; verify shaft key dimension before swap,0.85,description embedding; dimensional check required
+SP-MOTOR-3PH-10HP,VND-BALDOR-10HP-TEFC,vendor_catalog,Baldor TEFC motor, same HP/RPM/frame,0.86,description embedding; dimensional check required
+SP-VALVE-BALL-2IN,VND-CRANE-2IN-BALL-SS,vendor_catalog,Crane 316SS ball valve, same size and pressure class,0.92,description embedding + spec match
+SP-VALVE-SOLENOID-24V,VND-ASCO-SOLENOID-24V,vendor_catalog,ASCO 24VDC solenoid valve, same port size and coil voltage,0.93,description embedding + spec match
+SP-CONTACTOR-40A,VND-SIEMENS-3RT-40A,vendor_catalog,Siemens 3RT series contactor, same amperage and pole configuration,0.90,description embedding + spec match
+SP-COUPLING-FLEX-25MM,SP-COUPLING-FLEX-25MM-SS,internal_master,Stainless-steel jaw variant, same bore and torque rating for washdown areas,0.91,dimensional match; material substitution flagged
+SP-CHAIN-RS50,VND-TSUBAKI-RS50,vendor_catalog,Tsubaki RS50 roller chain, identical pitch and breaking load rating,0.94,description embedding + spec match
+SP-BRG-22212-CC,VND-TIMKEN-22212-CC,vendor_catalog,Timken spherical roller bearing, identical bore/OD/width and load rating,0.95,description embedding + ISO dimension match
+SP-VFD-15KW,VND-ABB-ACS580-15KW,vendor_catalog,ABB ACS580 drive, same kW rating and voltage class; reprogramming required,0.82,description embedding; functional parameter re-mapping required
+SP-PLC-CPU-1200,VND-SIEMENS-S71200-CPU,vendor_catalog,Siemens S7-1200 CPU module equivalent tier; program re-validation required,0.80,description embedding; firmware/program compatibility check required
+SP-ENCODER-INC-1024,VND-HEIDENHAIN-INC1024,vendor_catalog,Heidenhain incremental encoder, same PPR and voltage range,0.89,description embedding + spec match

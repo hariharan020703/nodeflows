@@ -1,0 +1,54 @@
+{
+  "tools": [
+    {
+      "name": "erp_get_production_plan",
+      "description": "Retrieve planned production runs by line and period (Line, Product, PlannedStart/End, PlannedQty), used as a demand-adjustment covariate for consumables tied to run-hours.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "line": { "type": "string" },
+          "start_date": { "type": "string", "format": "date" },
+          "end_date": { "type": "string", "format": "date" }
+        },
+        "required": ["line"]
+      }
+    },
+    {
+      "name": "erp_get_cost_center_budget",
+      "description": "Retrieve cost center budget and actual spend for a maintenance/MRO cost center and period, used for budget-fit checking of proposed procurement actions.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "cost_center_id": { "type": "string" },
+          "period": { "type": "string" }
+        },
+        "required": ["cost_center_id", "period"]
+      }
+    },
+    {
+      "name": "erp_get_plant_calendar",
+      "description": "Retrieve plant calendar working days, shutdown windows, and holidays for a plant over a date range.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "plant": { "type": "string" },
+          "start_date": { "type": "string", "format": "date" },
+          "end_date": { "type": "string", "format": "date" }
+        },
+        "required": ["plant"]
+      }
+    },
+    {
+      "name": "erp_get_purchasing_info_record",
+      "description": "Retrieve the ERP-held purchasing info record (vendor/material pricing and lead time) for cross-checking against live Supplier Portal quotes and SAP MM vendor pricing.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "material_id": { "type": "string" },
+          "vendor_id": { "type": "string" }
+        },
+        "required": ["material_id"]
+      }
+    }
+  ]
+}

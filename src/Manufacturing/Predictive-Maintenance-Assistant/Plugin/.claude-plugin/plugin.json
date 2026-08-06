@@ -1,0 +1,10 @@
+{
+  "name": "maintenance-copilot",
+  "version": "1.0.0",
+  "description": "Analyzes machine health, alarms, sensor data, runtime, vibration, temperature, and historical maintenance records to predict equipment failures before they occur, and orchestrates diagnosis, planning, and reporting so maintenance teams act before breakdown rather than after.",
+  "author": { "name": "GWC Manufacturing AI Accelerator Library" },
+  "license": "Proprietary",
+  "keywords": ["maintenance", "predictive-maintenance", "manufacturing", "reliability", "sap-pm"],
+  "skills": "../Skills",
+  "mcpServers": "./.mcp.json"
+}

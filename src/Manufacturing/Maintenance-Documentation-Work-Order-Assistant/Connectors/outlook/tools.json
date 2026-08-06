@@ -1,0 +1,65 @@
+{
+  "tools": [
+    {
+      "name": "outlook_send_mail",
+      "description": "Send an HTML email via Microsoft Graph sendMail from the dedicated service mailbox — used to distribute approved maintenance completion reports, repair completion certificates, and shift handover summaries to their configured recipients once a human reviewer has approved the draft. Must only be called after the corresponding human-approval gate has been satisfied.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "subject": { "type": "string" },
+          "html_body": { "type": "string" },
+          "to_recipients": { "type": "array", "items": { "type": "string", "format": "email" } },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "file_name": { "type": "string" },
+                "content_base64": { "type": "string" },
+                "content_type": { "type": "string" }
+              }
+            }
+          },
+          "disclaimer_footer": { "type": "boolean", "default": true, "description": "Append the standard AI-generated-content disclaimer footer." }
+        },
+        "required": ["subject", "html_body", "to_recipients"]
+      }
+    },
+    {
+      "name": "outlook_get_distribution_list",
+      "description": "Look up the configured recipient addresses for a plant/role distribution list (e.g., 'plant-a-maintenance-engineering', 'plant-b-shift-supervisors') so a report or handover summary is sent to the correct pre-approved audience without hardcoding addresses.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "plant": { "type": "string" },
+          "role": { "type": "string", "enum": ["maintenance-engineering", "shift-supervisors", "plant-management", "compliance"] }
+        },
+        "required": ["plant", "role"]
+      }
+    },
+    {
+      "name": "outlook_list_inbound_messages",
+      "description": "List inbound messages received at the service mailbox matching a sender/subject filter, for the optional inbound-ingestion path (e.g., a technician forwarding a photo or voice memo by email as an alternate submission channel).",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "sender_filter": { "type": "string" },
+          "subject_filter": { "type": "string" },
+          "since": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    {
+      "name": "outlook_get_message_attachment",
+      "description": "Retrieve a specific attachment (e.g., a forwarded photo or vendor quote PDF) from an inbound message for downstream OCR/vision-language processing.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "message_id": { "type": "string" },
+          "attachment_id": { "type": "string" }
+        },
+        "required": ["message_id", "attachment_id"]
+      }
+    }
+  ]
+}

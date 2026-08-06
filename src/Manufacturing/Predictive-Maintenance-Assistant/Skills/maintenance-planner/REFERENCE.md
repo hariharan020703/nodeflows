@@ -1,0 +1,3 @@
+# Reference: Maintenance Planner — Reusability Notes
+
+The scheduling-conflict-aware planning logic is directly reusable by the **Preventive Maintenance Planning Assistant** use case (for routine PM scheduling) and by **Production** planning functions for coordinating changeover or downtime windows against shared crew/equipment constraints. The core pattern — take a required action, a deadline, and a set of resource constraints, and output a conflict-checked recommended window rather than an autonomous schedule change — is a general resource-constrained scheduling pattern applicable to any department with shared crew or equipment constraints (e.g., Quality's calibration scheduling, EHS's inspection scheduling).

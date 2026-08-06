@@ -1,0 +1,6 @@
+{
+  "type": "url",
+  "url": "https://mcp.internal.company.com/sql-database",
+  "name": "sql-database",
+  "authorization_token": "${SQL_DATABASE_MCP_TOKEN}"
+}

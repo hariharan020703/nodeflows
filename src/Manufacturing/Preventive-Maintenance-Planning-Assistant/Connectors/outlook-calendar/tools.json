@@ -1,0 +1,72 @@
+{
+  "tools": [
+    {
+      "name": "outlook_get_free_busy",
+      "description": "Query free/busy availability for one or more technician calendars over a date/time range via the Microsoft Graph calendarView API. Read-only. This is the authoritative real-time check that supersedes the staged roster's available_dates field if the two disagree.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "attendee_emails": { "type": "array", "items": { "type": "string" } },
+          "start": { "type": "string", "format": "date-time" },
+          "end": { "type": "string", "format": "date-time" }
+        },
+        "required": ["attendee_emails", "start", "end"]
+      }
+    },
+    {
+      "name": "outlook_get_resource_calendar_events",
+      "description": "Retrieve existing events on the shared maintenance resource calendar (e.g., 'Plant A - Maintenance Schedule') for a date range, for conflict/double-booking detection before publishing new events. Read-only.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "resource_calendar_id": { "type": "string" },
+          "start": { "type": "string", "format": "date-time" },
+          "end": { "type": "string", "format": "date-time" }
+        },
+        "required": ["resource_calendar_id", "start", "end"]
+      }
+    },
+    {
+      "name": "outlook_create_event",
+      "description": "Create a preventive maintenance event on the shared maintenance resource calendar, with the equipment as location and assigned technician(s) as required attendees. Callers must run outlook_get_free_busy for every attendee immediately before calling this tool — the server does not perform its own conflict check, so a caller that skips the free/busy read risks a double-booking. On a detected conflict, do not call this tool for the conflicting slot; request up to 3 alternative slots from the scheduling engine and retry before escalating to a human planner.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "subject": { "type": "string" },
+          "start": { "type": "string", "format": "date-time" },
+          "end": { "type": "string", "format": "date-time" },
+          "location": { "type": "string" },
+          "attendee_emails": { "type": "array", "items": { "type": "string" } },
+          "time_zone": { "type": "string" }
+        },
+        "required": ["subject", "start", "end", "attendee_emails"]
+      }
+    },
+    {
+      "name": "outlook_update_event",
+      "description": "Update the start/end time, attendees, or subject of an existing preventive maintenance event, used during incremental re-optimization. Re-run outlook_get_free_busy for the new time before calling this tool.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "event_id": { "type": "string" },
+          "new_start": { "type": "string", "format": "date-time" },
+          "new_end": { "type": "string", "format": "date-time" },
+          "attendee_emails": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["event_id"]
+      }
+    },
+    {
+      "name": "outlook_cancel_event",
+      "description": "Cancel/delete an existing preventive maintenance event on the shared resource calendar, e.g., when a disruption removes the need for a previously scheduled task.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "event_id": { "type": "string" },
+          "cancellation_reason": { "type": "string" }
+        },
+        "required": ["event_id"]
+      }
+    }
+  ]
+}

@@ -1,0 +1,3 @@
+# Work Order Generator — Reusability Reference
+
+The core pattern — resolve an asset reference against a system-of-record master, draft a structured event record with duplicate detection, and gate write-back on human approval — is directly reusable by Quality (drafting a non-conformance record in a QMS from an inspector's note) and EHS (drafting an incident report in an EHS system from a witness account). Only the target schema (SAP PM notification vs. QMS non-conformance vs. EHS incident) and the connector need to change; the drafting, duplicate-check, and approval-gate logic carries over unchanged.

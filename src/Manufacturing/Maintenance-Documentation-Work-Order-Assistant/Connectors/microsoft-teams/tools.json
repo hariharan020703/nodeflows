@@ -1,0 +1,57 @@
+{
+  "tools": [
+    {
+      "name": "teams_post_adaptive_card",
+      "description": "Post an Adaptive Card (drafted work order, completion report, or shift handover summary) with Approve/Edit/View Full Draft actions to a plant/shift channel or to an individual reviewer, for the mandatory human-review-and-approve step before any connector write-back or distribution occurs.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "channel_id": { "type": "string" },
+          "card_body": { "type": "object", "description": "Adaptive Card JSON body (TextBlocks, etc.)." },
+          "actions": {
+            "type": "array",
+            "items": { "type": "string", "enum": ["Approve", "Edit", "View Full Draft", "Dismiss"] }
+          },
+          "conversation_id": { "type": "string", "description": "Correlation ID linked to the source work_order_ref or evidence record." }
+        },
+        "required": ["channel_id", "card_body"]
+      }
+    },
+    {
+      "name": "teams_send_direct_message",
+      "description": "Send a 1:1 direct message escalation to an on-call technician, maintenance engineer, or shift supervisor — used when a photo assessment returns a discrepancy_flag or a duplicate-submission check flags a possible duplicate, so the escalation is not missed inside a busy channel.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "recipient_user_id": { "type": "string" },
+          "message_text": { "type": "string" },
+          "conversation_id": { "type": "string" }
+        },
+        "required": ["recipient_user_id", "message_text"]
+      }
+    },
+    {
+      "name": "teams_get_action_response",
+      "description": "Retrieve the button-click payload or free-text reply a human reviewer submitted against a previously posted Adaptive Card (e.g., Approve/Edit), correlated by conversation_id, so the orchestrator can route the approval or edit request back to the drafting skill.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "conversation_id": { "type": "string" }
+        },
+        "required": ["conversation_id"]
+      }
+    },
+    {
+      "name": "teams_list_channel_submissions",
+      "description": "List technician-submitted attachments (voice recordings, notes, repair photos) posted to the dedicated submission channel since a given timestamp, for intake into the multimodal processing pipeline.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "channel_id": { "type": "string" },
+          "since": { "type": "string", "format": "date-time" }
+        },
+        "required": ["channel_id"]
+      }
+    }
+  ]
+}

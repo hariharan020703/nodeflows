@@ -1,0 +1,58 @@
+{
+  "tools": [
+    {
+      "name": "inventory_db_get_spare_part",
+      "description": "Retrieve the criticality-enriched spare part master record from dim_spare_part, including criticality class, min/max stock, and lead time.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "material_id": { "type": "string" }
+        },
+        "required": ["material_id"]
+      }
+    },
+    {
+      "name": "inventory_db_query_consumption_history",
+      "description": "Run an analytical query against fact_consumption for a material/plant over a date range, returning consumed quantity, date, and work order reference per record, for demand forecasting.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "material_id": { "type": "string" },
+          "plant": { "type": "string" },
+          "start_date": { "type": "string", "format": "date" },
+          "end_date": { "type": "string", "format": "date" }
+        },
+        "required": ["material_id", "plant"]
+      }
+    },
+    {
+      "name": "inventory_db_get_stock_snapshot",
+      "description": "Retrieve the most recent daily stock snapshot (fact_stock_snapshot) for a material/plant, including on-hand quantity and snapshot date. This is an analytical, potentially up-to-24-hour-stale copy; cross-check against the live SAP MM stock read for any material flagged at stock-out risk.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "material_id": { "type": "string" },
+          "plant": { "type": "string" }
+        },
+        "required": ["material_id", "plant"]
+      }
+    },
+    {
+      "name": "inventory_db_log_ai_recommendation",
+      "description": "Write an AI-generated stocking or procurement recommendation to fact_ai_spare_recommendation for audit trail purposes. This is the only write action this connector supports; it cannot write to actual on-hand stock quantities, which remain owned by SAP MM/WMS as system of record.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "material_id": { "type": "string" },
+          "plant": { "type": "string" },
+          "recommended_min": { "type": "number" },
+          "recommended_max": { "type": "number" },
+          "rationale": { "type": "string" },
+          "model_version": { "type": "string" },
+          "generated_at": { "type": "string", "format": "date-time" }
+        },
+        "required": ["material_id", "plant", "rationale", "model_version", "generated_at"]
+      }
+    }
+  ]
+}

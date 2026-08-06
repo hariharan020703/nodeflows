@@ -1,0 +1,6 @@
+{
+  "type": "url",
+  "url": "https://mcp.internal.company.com/mes",
+  "name": "mes",
+  "authorization_token": "${MES_MCP_TOKEN}"
+}

@@ -1,0 +1,53 @@
+{
+  "tools": [
+    {
+      "name": "erp_get_production_plan",
+      "description": "Retrieve planned production runs (line, product, planned start/end, planned quantity) for a line and date range from the ERP production plan. Read-only. Used as the primary hard-constraint source for preventive maintenance scheduling windows.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "line": { "type": "string" },
+          "start_date": { "type": "string", "format": "date" },
+          "end_date": { "type": "string", "format": "date" }
+        },
+        "required": ["line", "start_date", "end_date"]
+      }
+    },
+    {
+      "name": "erp_get_plant_calendar",
+      "description": "Retrieve plant calendar day types (working day, shutdown, holiday) for a plant and date range from the ERP. Read-only. Shutdown days are surfaced as preferred high-availability PM windows.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "plant": { "type": "string" },
+          "start_date": { "type": "string", "format": "date" },
+          "end_date": { "type": "string", "format": "date" }
+        },
+        "required": ["plant", "start_date", "end_date"]
+      }
+    },
+    {
+      "name": "erp_get_cost_center",
+      "description": "Retrieve maintenance/spares cost center budget and actual spend for a period from the ERP. Read-only. Provisioned for service-account consistency across Maintenance use cases; not consumed by the current scheduling workflow.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "cost_center_id": { "type": "string" },
+          "period": { "type": "string" }
+        },
+        "required": ["cost_center_id", "period"]
+      }
+    },
+    {
+      "name": "erp_get_staging_freshness",
+      "description": "Return the as-of timestamp of the most recently cached ERP production-plan/plant-calendar staging pull, so callers can enforce the 48-hour staleness guard before relying on cached data for automatic schedule publication. Read-only.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "dataset": { "type": "string", "enum": ["production_plan", "plant_calendar"] }
+        },
+        "required": ["dataset"]
+      }
+    }
+  ]
+}

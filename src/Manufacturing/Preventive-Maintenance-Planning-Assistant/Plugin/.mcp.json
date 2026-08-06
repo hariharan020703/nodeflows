@@ -1,0 +1,29 @@
+{
+  "mcpServers": {
+    "sap-pm": {
+      "type": "url",
+      "url": "https://mcp.internal.company.com/sap-pm",
+      "authorization_token": "${SAP_PM_MCP_TOKEN}"
+    },
+    "erp": {
+      "type": "url",
+      "url": "https://mcp.internal.company.com/erp",
+      "authorization_token": "${ERP_MCP_TOKEN}"
+    },
+    "outlook-calendar": {
+      "type": "url",
+      "url": "https://mcp.internal.company.com/outlook-calendar",
+      "authorization_token": "${OUTLOOK_CALENDAR_MCP_TOKEN}"
+    },
+    "microsoft-teams": {
+      "type": "url",
+      "url": "https://mcp.internal.company.com/microsoft-teams",
+      "authorization_token": "${MS_TEAMS_MCP_TOKEN}"
+    },
+    "sql-database": {
+      "type": "url",
+      "url": "https://mcp.internal.company.com/sql-database",
+      "authorization_token": "${SQL_DATABASE_MCP_TOKEN}"
+    }
+  }
+}

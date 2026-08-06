@@ -1,0 +1,65 @@
+{
+  "tools": [
+    {
+      "name": "sharepoint_search_documents",
+      "description": "Run a semantic/full-text search (Microsoft Graph Search API plus vector index) across the SOP Library, OEM Manuals, and RCA Reports document libraries for a given site, used to ground failure-mode terminology and completion-report language in approved plant documentation.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "site_id": { "type": "string" },
+          "query": { "type": "string" },
+          "libraries": {
+            "type": "array",
+            "items": { "type": "string", "enum": ["SOP Library", "OEM Manuals", "RCA Reports"] }
+          },
+          "equipment_type": { "type": "string" },
+          "top_k": { "type": "integer", "default": 5 }
+        },
+        "required": ["site_id", "query"]
+      }
+    },
+    {
+      "name": "sharepoint_get_document",
+      "description": "Retrieve the full content of a specific SharePoint document (SOP section, OEM manual excerpt, or RCA report) by its item ID, for use as generation grounding context.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "site_id": { "type": "string" },
+          "item_id": { "type": "string" }
+        },
+        "required": ["site_id", "item_id"]
+      }
+    },
+    {
+      "name": "sharepoint_upload_ai_generated_file",
+      "description": "Upload a generated report, certificate, or handover summary (plus its source evidence attachments) to the plant's AI-Generated subfolder, tagged with the AI-Generated metadata column and the source work_order_ref. Must only be called after the corresponding human-approval gate has been satisfied.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "site_id": { "type": "string" },
+          "path": { "type": "string", "description": "e.g. /AI-Generated/WorkOrders/WO-2026-100205/" },
+          "file_name": { "type": "string" },
+          "content_base64": { "type": "string" },
+          "work_order_ref": { "type": "string" },
+          "tags": { "type": "array", "items": { "type": "string" }, "default": ["AI-Generated"] }
+        },
+        "required": ["site_id", "path", "file_name", "content_base64", "work_order_ref"]
+      }
+    },
+    {
+      "name": "sharepoint_upload_photo_evidence",
+      "description": "Archive a technician-submitted repair/damage photo, along with its vision-language assessment result, to the equipment's work_order_ref-tagged evidence folder, giving completion reports and audits a permanent, linked evidence trail.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "site_id": { "type": "string" },
+          "work_order_ref": { "type": "string" },
+          "file_name": { "type": "string" },
+          "content_base64": { "type": "string" },
+          "photo_assessment": { "type": "object", "description": "Vision-language assessment result, including any discrepancy_flag." }
+        },
+        "required": ["site_id", "work_order_ref", "file_name", "content_base64"]
+      }
+    }
+  ]
+}

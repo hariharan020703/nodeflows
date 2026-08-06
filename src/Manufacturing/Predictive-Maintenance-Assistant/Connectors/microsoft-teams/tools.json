@@ -1,0 +1,41 @@
+{
+  "tools": [
+    {
+      "name": "teams_post_adaptive_card",
+      "description": "Post an Adaptive Card (risk briefing, alert, or shift handover summary) to a specific Microsoft Teams channel, optionally including structured action buttons (e.g., Create Work Order, Dismiss). This is a write action limited to channels the bot has been explicitly installed on; it does not itself change any system of record.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "channel": { "type": "string", "description": "e.g. 'Plant A - Maintenance Shift Channel'." },
+          "card_json": { "type": "object", "description": "Adaptive Card JSON payload." },
+          "correlation_id": { "type": "string", "description": "conversationId correlated to the source event (alarm ID, notification number)." }
+        },
+        "required": ["channel", "card_json"]
+      }
+    },
+    {
+      "name": "teams_send_direct_message",
+      "description": "Send a 1:1 direct message escalation to an on-call technician or shift supervisor. Write action limited to onboarded users; used for critical breakdown escalation.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "user_upn": { "type": "string", "description": "User principal name / email of the recipient." },
+          "message": { "type": "string" },
+          "correlation_id": { "type": "string" }
+        },
+        "required": ["user_upn", "message"]
+      }
+    },
+    {
+      "name": "teams_get_card_action_responses",
+      "description": "Retrieve button-click / adaptive card action responses (e.g., Approve, Escalate, Acknowledge) received for a given correlation ID, so the orchestration layer can route the human decision back into the workflow.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "correlation_id": { "type": "string" }
+        },
+        "required": ["correlation_id"]
+      }
+    }
+  ]
+}

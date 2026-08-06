@@ -1,0 +1,10 @@
+{
+  "name": "breakdown-investigation-copilot",
+  "version": "1.0.0",
+  "description": "Automatically collects MES, Historian, and SAP PM evidence for an equipment breakdown, reconstructs the incident timeline, ranks probable root causes with cited evidence against historical failure signatures, and drafts corrective actions and an RCA report for maintenance engineer review and approval.",
+  "author": { "name": "GWC Manufacturing AI Accelerator Library" },
+  "license": "Proprietary",
+  "keywords": ["maintenance", "root-cause-analysis", "breakdown-investigation", "manufacturing"],
+  "skills": "../Skills",
+  "mcpServers": "./.mcp.json"
+}

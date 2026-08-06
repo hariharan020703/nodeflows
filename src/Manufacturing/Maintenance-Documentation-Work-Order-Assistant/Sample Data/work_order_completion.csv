@@ -1,0 +1,27 @@
+order_no,equipment_id,status,completion_date,labor_hours,parts_used
+WO-2026-100201,10004521,Completed,2026-07-28,3.5,Bearing 6205-2RS x2; NLGI-2 grease cartridge
+WO-2026-100202,10004532,Completed,2026-07-29,4.0,Laser alignment kit consumables; shim set 0.5mm
+WO-2026-100203,10004541,Pending Parts,,1.5,Awaiting output shaft seal (PN GB-3311-SEAL)
+WO-2026-100204,10004548,Completed,2026-07-28,2.25,Torch tip; contact tip 0.045in; shielding gas nozzle
+WO-2026-100205,10004555,Completed - Follow-up Required,2026-07-29,5.0,Motor bearing set 6309-2RS; terminal box gasket
+WO-2026-100206,10004560,Completed,2026-07-30,6.0,Air/oil separator element; inlet filter
+WO-2026-100207,20003301,Completed,2026-07-27,4.5,Die cushion nitrogen cylinder seal kit
+WO-2026-100208,20003312,In Progress,,2.0,Refrigerant leak detector dye kit; pending R-134a top-off
+WO-2026-100209,20003318,Completed,2026-07-30,3.0,Belt splice kit; idler bearing
+WO-2026-100210,20003325,Completed,2026-07-28,2.5,Condenser fan motor capacitor; filter set
+WO-2026-100211,10004521,Completed,2026-07-31,1.0,Mechanical seal inspection only - no parts consumed
+WO-2026-100212,10004532,Cancelled,,0.5,Duplicate of WO-2026-100202 - closed as duplicate
+WO-2026-100213,10004541,Completed,2026-08-01,3.75,Output shaft seal GB-3311-SEAL; gear oil ISO 320 (4L)
+WO-2026-100214,10004548,Completed,2026-07-31,1.5,Axis 3 servo cable connector; dielectric grease
+WO-2026-100215,10004555,Completed,2026-07-31,2.0,Post-repair vibration verification only - no parts consumed
+WO-2026-100216,10004560,Completed - Follow-up Required,2026-08-01,4.0,Discharge check valve; gasket set
+WO-2026-100217,20003301,Completed,2026-08-01,3.0,Clutch/brake friction disc
+WO-2026-100218,20003312,Completed,2026-08-02,3.5,R-134a refrigerant 4.5kg; braze repair materials on liquid line
+WO-2026-100219,20003318,Pending Parts,,1.0,Awaiting replacement gearmotor (PN CV5-GM-750)
+WO-2026-100220,20003325,Completed,2026-08-02,1.75,Belt set A38; sheave alignment (no parts consumed for alignment)
+WO-2026-100221,10004521,Completed,2026-08-02,2.0,Coupling elastomer insert
+WO-2026-100222,10004532,Completed,2026-08-03,2.5,Photo-eye sensor replacement
+WO-2026-100223,10004555,Completed,2026-08-03,4.5,Rewound motor unit installation; grease nipple
+WO-2026-100224,10004560,Completed,2026-08-03,2.0,Intake filter
+WO-2026-100225,20003301,In Progress,,2.0,Diagnostic data logger installed - no parts consumed yet
+WO-2026-100226,20003312,Completed,2026-08-03,1.5,Condenser coil cleaning - no parts consumed

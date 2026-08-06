@@ -1,0 +1,6 @@
+{
+  "type": "url",
+  "url": "https://mcp.internal.company.com/supplier-portal",
+  "name": "supplier-portal",
+  "authorization_token": "${SUPPLIER_PORTAL_MCP_TOKEN}"
+}

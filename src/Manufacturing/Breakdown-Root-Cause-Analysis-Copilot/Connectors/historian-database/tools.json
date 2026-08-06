@@ -1,0 +1,55 @@
+{
+  "tools": [
+    {
+      "name": "historian_get_recorded_values",
+      "description": "Retrieve raw and compressed (swinging-door) recorded values for a list of tags across a time-windowed range.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "start_time": { "type": "string", "description": "ISO-8601 start of range" },
+          "end_time": { "type": "string", "description": "ISO-8601 end of range" }
+        },
+        "required": ["tags", "start_time", "end_time"]
+      }
+    },
+    {
+      "name": "historian_get_interpolated_values",
+      "description": "Retrieve interpolated values for a list of tags across a time-windowed range at a specified interval, distinctly flagged as interpolated rather than raw-recorded.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "start_time": { "type": "string" },
+          "end_time": { "type": "string" },
+          "interval_seconds": { "type": "integer" }
+        },
+        "required": ["tags", "start_time", "end_time"]
+      }
+    },
+    {
+      "name": "historian_get_tag_metadata",
+      "description": "Retrieve tag metadata (engineering units, description, asset linkage) for a list of tags or an equipment ID's mapped tag list.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "equipment_id": { "type": "string" }
+        }
+      }
+    },
+    {
+      "name": "historian_query_event_frames",
+      "description": "Query historian-native event frames (native start/end markers bounding an incident) overlapping a given equipment and time window, to auto-discover incident boundaries.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "equipment_id": { "type": "string" },
+          "from": { "type": "string" },
+          "to": { "type": "string" }
+        },
+        "required": ["from", "to"]
+      }
+    }
+  ]
+}

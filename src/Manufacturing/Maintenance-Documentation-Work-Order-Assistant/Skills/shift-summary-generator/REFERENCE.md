@@ -1,0 +1,3 @@
+# Shift Summary Generator — Reusability Reference
+
+Shift-based handover compilation is a near-universal manufacturing pattern, not unique to maintenance: Production can reuse this skill to hand over line-status, quality-hold, and changeover information between shifts, and Quality can reuse it to hand over open non-conformance and containment-action status. The aggregation logic (query system-of-record status, cross-check for drift, surface safety-relevant items first, carry forward unresolved watch items) is identical; only the source system query (SAP PM orders vs. MES line events vs. QMS non-conformances) changes.

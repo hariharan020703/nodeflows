@@ -1,0 +1,6 @@
+{
+  "type": "url",
+  "url": "https://mcp.internal.company.com/historian-database",
+  "name": "historian-database",
+  "authorization_token": "${HISTORIAN_MCP_TOKEN}"
+}

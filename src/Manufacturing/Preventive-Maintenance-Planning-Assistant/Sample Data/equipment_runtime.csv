@@ -1,0 +1,31 @@
+equipment_id,description,line,asset_class,run_hours_total,oem_service_interval_hours,last_service_date,criticality
+EQ-10041,Conveyor Motor 04 - Line 1,LINE1,Mechanical,14820,4000,2026-05-18,Critical
+EQ-10042,Conveyor Motor 07 - Line 1,LINE1,Mechanical,9760,4000,2026-06-02,Critical
+EQ-10088,Centrifugal Pump P-101 - Line 1,LINE1,Rotating Equipment,22140,2000,2026-07-01,High
+EQ-10089,Centrifugal Pump P-102 - Line 1,LINE1,Rotating Equipment,18990,2000,2026-06-20,Critical
+EQ-10105,Gearbox GB-3 - Line 1 Palletizer,LINE1,Mechanical,31200,6000,2026-03-14,Critical
+EQ-20014,CNC Machining Center MC-14,LINE2,CNC,41200,1000,2026-07-22,Critical
+EQ-20015,CNC Machining Center MC-15,LINE2,CNC,38650,1000,2026-07-15,Critical
+EQ-20033,Robotic Arm ABB-R33 - Weld Cell,LINE2,Robotics,26410,3000,2026-05-29,Critical
+EQ-20034,Robotic Arm ABB-R34 - Weld Cell,LINE2,Robotics,25980,3000,2026-05-25,Medium
+EQ-20051,Hydraulic Press HP-500T,LINE2,Press,19870,1500,2026-06-10,Critical
+EQ-20052,Hydraulic Press HP-800T,LINE2,Press,21030,1500,2026-06-08,Critical
+EQ-30007,Air Compressor AC-1 (Screw),UTILITIES,Rotating Equipment,52300,2500,2026-04-30,Critical
+EQ-30008,Air Compressor AC-2 (Screw),UTILITIES,Rotating Equipment,49870,2500,2026-05-05,Critical
+EQ-30012,Chiller CH-1 - Plant Cooling,UTILITIES,HVAC/Refrigeration,61400,4000,2026-02-20,Critical
+EQ-30013,Chiller CH-2 - Plant Cooling,UTILITIES,HVAC/Refrigeration,58900,4000,2026-02-25,Critical
+EQ-30020,Boiler BLR-1 (Steam),UTILITIES,Boiler/Pressure Vessel,47210,3000,2026-01-15,Critical
+EQ-30021,Cooling Tower CT-1,UTILITIES,HVAC/Refrigeration,39880,4500,2026-03-30,High
+EQ-40010,Injection Molding Machine IMM-10,LINE3,Molding,33200,2000,2026-06-01,Critical
+EQ-40011,Injection Molding Machine IMM-11,LINE3,Molding,34870,2000,2026-06-05,Medium
+EQ-40012,Extruder EXT-1,LINE3,Molding,29650,2500,2026-05-12,High
+EQ-40013,Extruder EXT-2,LINE3,Molding,28410,2500,2026-05-10,Critical
+EQ-40025,Packaging Machine PKG-25,LINE3,Packaging,17600,1500,2026-06-18,Critical
+EQ-40026,Packaging Machine PKG-26,LINE3,Packaging,16980,1500,2026-06-22,Medium
+EQ-50003,Overhead Crane OHC-3,LINE4,Material Handling,22750,5000,2026-04-01,High
+EQ-50004,Overhead Crane OHC-4,LINE4,Material Handling,21390,5000,2026-04-04,High
+EQ-50015,AGV Fleet Charging Station CS-2,LINE4,Material Handling,8760,2000,2026-07-08,Critical
+EQ-50016,Conveyor Sorter SRT-2 - Line 4,LINE4,Mechanical,13480,3500,2026-06-15,Critical
+EQ-60001,AHU Rooftop Unit AHU-1,UTILITIES,HVAC/Refrigeration,44200,3000,2026-03-05,High
+EQ-60002,AHU Rooftop Unit AHU-2,UTILITIES,HVAC/Refrigeration,43870,3000,2026-03-08,Critical
+EQ-60010,Emergency Diesel Generator GEN-1,UTILITIES,Power,6120,500,2026-07-28,Critical

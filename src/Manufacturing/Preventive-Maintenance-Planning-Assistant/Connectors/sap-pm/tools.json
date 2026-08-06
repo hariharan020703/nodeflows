@@ -1,0 +1,84 @@
+{
+  "tools": [
+    {
+      "name": "sap_pm_get_equipment",
+      "description": "Retrieve SAP PM equipment master data (IE03) by equipment ID or functional location, including manufacturer, model, serial number, object type, and warranty dates.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "equipment_id": { "type": "string" },
+          "functional_location": { "type": "string" }
+        }
+      }
+    },
+    {
+      "name": "sap_pm_get_maintenance_plan",
+      "description": "Retrieve a SAP PM maintenance plan (IP10) for an equipment ID, including cycle, task list, and next due date, used to compute interval utilization.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "equipment_id": { "type": "string" }
+        },
+        "required": ["equipment_id"]
+      }
+    },
+    {
+      "name": "sap_pm_get_breakdown_history",
+      "description": "Retrieve read-only breakdown history (PM Info System) for an equipment ID, including MTBF, MTTR, downtime hours, and cost, used to avoid scheduling routine PM immediately adjacent to a recent breakdown window.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "equipment_id": { "type": "string" },
+          "since_date": { "type": "string", "format": "date" }
+        },
+        "required": ["equipment_id"]
+      }
+    },
+    {
+      "name": "sap_pm_create_notification",
+      "description": "Create a SAP PM maintenance notification (IW21) for a breakdown or observed issue on a piece of equipment.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "equipment": { "type": "string" },
+          "notification_type": { "type": "string", "enum": ["M1", "M2", "M3"] },
+          "short_text": { "type": "string" },
+          "breakdown_indicator": { "type": "boolean" },
+          "malfunction_start_date": { "type": "string", "format": "date-time" }
+        },
+        "required": ["equipment", "notification_type", "short_text"]
+      }
+    },
+    {
+      "name": "sap_pm_create_planned_order",
+      "description": "Create a SAP PM maintenance order (IW31, order type PM01) for a scheduled preventive maintenance task. The order is created in 'Planned, Unreleased' status only — it must never be released to the shop floor by this tool. Requires human approval: a Maintenance Planner must release the order in SAP PM, or approve the release via the Teams adaptive-card workflow, before it becomes an active shop-floor work order.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "equipment": { "type": "string" },
+          "order_type": { "type": "string", "enum": ["PM01", "PM02", "PM03"] },
+          "planned_start_date": { "type": "string", "format": "date" },
+          "priority": { "type": "string" },
+          "plan_id": { "type": "string" },
+          "checklist_reference": { "type": "string" }
+        },
+        "required": ["equipment", "order_type", "planned_start_date", "plan_id"]
+      }
+    },
+    {
+      "name": "sap_pm_post_completion_confirmation",
+      "description": "Post a completion confirmation (actual date, actual hours, technician, findings) back to an existing SAP PM maintenance order once the PM task has been performed.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "order_number": { "type": "string" },
+          "actual_completion_date": { "type": "string", "format": "date" },
+          "actual_hours": { "type": "number" },
+          "technician_id": { "type": "string" },
+          "findings": { "type": "string" }
+        },
+        "required": ["order_number", "actual_completion_date"]
+      }
+    }
+  ]
+}

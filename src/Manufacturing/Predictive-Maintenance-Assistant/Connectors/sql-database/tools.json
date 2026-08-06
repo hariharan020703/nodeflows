@@ -1,0 +1,71 @@
+{
+  "tools": [
+    {
+      "name": "sql_query_sensor_readings",
+      "description": "Query time-series sensor telemetry from fact_sensor_readings for an equipment over a time window, optionally filtered by metric name.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "equipment_id": { "type": "string" },
+          "metric_name": { "type": "string", "description": "e.g. 'Vibration_RMS_Velocity', 'Bearing_Temp', 'Motor_Current'." },
+          "start_time": { "type": "string", "format": "date-time" },
+          "end_time": { "type": "string", "format": "date-time" }
+        },
+        "required": ["equipment_id", "start_time", "end_time"]
+      }
+    },
+    {
+      "name": "sql_query_alarms",
+      "description": "Query historized alarm events from fact_alarms for an equipment over a time window.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "equipment_id": { "type": "string" },
+          "start_time": { "type": "string", "format": "date-time" },
+          "end_time": { "type": "string", "format": "date-time" },
+          "min_severity": { "type": "string", "enum": ["Low", "Medium", "High", "Critical"] }
+        },
+        "required": ["equipment_id"]
+      }
+    },
+    {
+      "name": "sql_query_maintenance_history",
+      "description": "Query consolidated work order/notification history from fact_maintenance_history for an equipment, including downtime hours, cost, and closure dates.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "equipment_id": { "type": "string" },
+          "start_date": { "type": "string", "format": "date" },
+          "end_date": { "type": "string", "format": "date" }
+        },
+        "required": ["equipment_id"]
+      }
+    },
+    {
+      "name": "sql_query_equipment_dimension",
+      "description": "Query equipment master/dimension data from dim_equipment (criticality class, install date, description), synced from SAP PM.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "equipment_id": { "type": "string" },
+          "criticality_class": { "type": "string" }
+        }
+      }
+    },
+    {
+      "name": "sql_insert_failure_prediction",
+      "description": "Insert a new model output row into fact_failure_predictions (anomaly score, contributing metrics, RUL estimate, model_version). This is a write action restricted to the designated output table; it does not modify any source-of-record table and does not require human approval, but every insert is logged with model_version, agent_id, and generated_at for audit traceability.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "equipment_id": { "type": "string" },
+          "prediction_ts": { "type": "string", "format": "date-time" },
+          "failure_probability": { "type": "number", "minimum": 0, "maximum": 1 },
+          "predicted_component": { "type": "string" },
+          "model_version": { "type": "string" }
+        },
+        "required": ["equipment_id", "prediction_ts", "failure_probability", "model_version"]
+      }
+    }
+  ]
+}

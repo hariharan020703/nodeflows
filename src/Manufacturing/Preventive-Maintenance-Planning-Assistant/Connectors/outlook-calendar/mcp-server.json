@@ -1,0 +1,6 @@
+{
+  "type": "url",
+  "url": "https://mcp.internal.company.com/outlook-calendar",
+  "name": "outlook-calendar",
+  "authorization_token": "${OUTLOOK_CALENDAR_MCP_TOKEN}"
+}

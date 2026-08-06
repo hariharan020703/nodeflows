@@ -1,0 +1,60 @@
+{
+  "tools": [
+    {
+      "name": "sharepoint_search_sop_library",
+      "description": "Run a semantic/vector search against the SharePoint SOP Library, restricted to the current approved version, filtered by EquipmentType and optionally EquipmentModel, returning the matching document section (not the whole document).",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "query": { "type": "string" },
+          "equipment_type": { "type": "string" },
+          "equipment_model": { "type": "string" },
+          "min_relevance": { "type": "number", "minimum": 0, "maximum": 1 }
+        },
+        "required": ["query", "equipment_type"]
+      }
+    },
+    {
+      "name": "sharepoint_search_rca_archive",
+      "description": "Run a semantic/vector search against the SharePoint RCA (root cause analysis) archive for prior incidents matching an equipment type/model and symptom pattern, returning IncidentID, Equipment, RootCause, Date, and excerpt.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "query": { "type": "string" },
+          "equipment_type": { "type": "string" },
+          "equipment_model": { "type": "string" },
+          "min_relevance": { "type": "number", "minimum": 0, "maximum": 1 }
+        },
+        "required": ["query"]
+      }
+    },
+    {
+      "name": "sharepoint_search_oem_manuals",
+      "description": "Run a semantic/vector search against the SharePoint OEM manuals library for manufacturer failure-mode and troubleshooting documentation matching an equipment model.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "query": { "type": "string" },
+          "manufacturer": { "type": "string" },
+          "equipment_model": { "type": "string" }
+        },
+        "required": ["query"]
+      }
+    },
+    {
+      "name": "sharepoint_upload_ai_generated_report",
+      "description": "Upload a finalized AI-generated diagnostic/RCA report file into the 'AI-Generated' subfolder of the RCA archive, tagged with the AI-Generated metadata column. This is a write action: the report is staged in the AI-Generated subfolder only and requires a human review step before it may be promoted into the approved SOP/RCA library.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "site_path": { "type": "string", "description": "e.g. '/sites/PlantA-Maintenance'." },
+          "target_path": { "type": "string", "description": "Destination path within the AI-Generated subfolder." },
+          "file_name": { "type": "string" },
+          "content_base64": { "type": "string" },
+          "related_equipment_id": { "type": "string" }
+        },
+        "required": ["site_path", "target_path", "file_name", "content_base64"]
+      }
+    }
+  ]
+}

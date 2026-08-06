@@ -1,0 +1,10 @@
+{
+  "name": "maintenance-documentation-assistant",
+  "version": "1.0.0",
+  "description": "Generates SAP PM work orders, maintenance completion reports, and shift handover summaries from technician voice recordings, notes, and repair photos, with a mandatory human-review gate before any system-of-record write-back.",
+  "author": { "name": "GWC Manufacturing AI Accelerator Library" },
+  "license": "Proprietary",
+  "keywords": ["maintenance", "work-order", "documentation", "sap-pm", "manufacturing"],
+  "skills": "../Skills",
+  "mcpServers": "./.mcp.json"
+}

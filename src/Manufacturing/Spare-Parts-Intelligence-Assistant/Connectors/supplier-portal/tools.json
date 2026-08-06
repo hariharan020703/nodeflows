@@ -1,0 +1,53 @@
+{
+  "tools": [
+    {
+      "name": "supplier_portal_get_vendor_catalog_item",
+      "description": "Retrieve supplier-listed catalog item data (VendorPartNo, InternalMaterialXref, Price, MOQ, LeadTimeDays) for a material, across one or more vendors, for vendor comparison and ranking.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "material_id": { "type": "string" },
+          "vendor_ids": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["material_id"]
+      }
+    },
+    {
+      "name": "supplier_portal_get_alternative_parts",
+      "description": "Retrieve alternative/substitute part cross-references (OriginalMaterial, AlternativeMaterial, CompatibilityNotes) for a given material, used to validate embedding-matched substitute candidates.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "material_id": { "type": "string" }
+        },
+        "required": ["material_id"]
+      }
+    },
+    {
+      "name": "supplier_portal_get_vendor_performance",
+      "description": "Retrieve vendor performance metrics (OTIFRate, RejectionRate, RatingScore) for one or more vendors.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "vendor_ids": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["vendor_ids"]
+      }
+    },
+    {
+      "name": "supplier_portal_submit_rfq",
+      "description": "Submit a request for quote (RFQ) to one or more vendors for a spare part. This is the connector's write action for sourcing; it only solicits pricing and never commits spend or issues a purchase order — any resulting order still flows through the SAP MM purchase requisition/PO approval chain. The resulting quote is ingested asynchronously.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "material": { "type": "string" },
+          "quantity": { "type": "number" },
+          "required_date": { "type": "string", "format": "date" },
+          "vendors": { "type": "array", "items": { "type": "string" } },
+          "notes": { "type": "string" }
+        },
+        "required": ["material", "quantity", "required_date", "vendors"]
+      }
+    }
+  ]
+}

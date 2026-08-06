@@ -1,0 +1,6 @@
+{
+  "type": "url",
+  "url": "https://mcp.internal.company.com/outlook",
+  "name": "outlook",
+  "authorization_token": "${OUTLOOK_MCP_TOKEN}"
+}

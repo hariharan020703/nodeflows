@@ -1,0 +1,10 @@
+{
+  "name": "spare-parts-copilot",
+  "version": "1.0.0",
+  "description": "Forecasts spare-part consumption, recommends criticality-weighted inventory levels, identifies alternative parts, and drafts procurement requests for human approval.",
+  "author": { "name": "GWC Manufacturing AI Accelerator Library" },
+  "license": "Proprietary",
+  "keywords": ["maintenance", "spare-parts", "inventory-optimization", "procurement", "manufacturing"],
+  "skills": "../Skills",
+  "mcpServers": "./.mcp.json"
+}

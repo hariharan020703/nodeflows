@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "sap-pm": {
+      "type": "url",
+      "url": "https://mcp.internal.company.com/sap-pm",
+      "authorization_token": "${SAP_PM_MCP_TOKEN}"
+    },
+    "sharepoint": {
+      "type": "url",
+      "url": "https://mcp.internal.company.com/sharepoint",
+      "authorization_token": "${SHAREPOINT_MCP_TOKEN}"
+    },
+    "microsoft-teams": {
+      "type": "url",
+      "url": "https://mcp.internal.company.com/microsoft-teams",
+      "authorization_token": "${TEAMS_MCP_TOKEN}"
+    },
+    "outlook": {
+      "type": "url",
+      "url": "https://mcp.internal.company.com/outlook",
+      "authorization_token": "${OUTLOOK_MCP_TOKEN}"
+    }
+  }
+}

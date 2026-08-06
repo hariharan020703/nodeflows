@@ -1,0 +1,52 @@
+{
+  "tools": [
+    {
+      "name": "teams_post_adaptive_card",
+      "description": "Post an Adaptive Card to an onboarded Teams channel (e.g., 'Plant A - Maintenance Planning Channel'), such as a weekly proposed-schedule summary or a re-optimization diff, with Approve/Modify action buttons. The bot may only post to channels it has been explicitly installed into by a Teams admin — never a tenant-wide broadcast. This is the human-approval gate for any downstream write-back to SAP PM or Outlook Calendar; the write-back tool must not be called until the corresponding card action is received.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "channel_id": { "type": "string" },
+          "card_json": { "type": "object" },
+          "conversation_id": { "type": "string" }
+        },
+        "required": ["channel_id", "card_json", "conversation_id"]
+      }
+    },
+    {
+      "name": "teams_send_direct_message",
+      "description": "Send a 1:1 direct message to a technician or shift supervisor, e.g., a task-assignment notification with checklist attached, or an escalation for an unstaffed resource-gap task.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "user_email": { "type": "string" },
+          "message": { "type": "string" },
+          "conversation_id": { "type": "string" }
+        },
+        "required": ["user_email", "message"]
+      }
+    },
+    {
+      "name": "teams_get_card_action",
+      "description": "Poll for or receive the latest Adaptive Card action (Approve, Modify, Acknowledge, etc.) submitted against a previously posted card, correlated by conversation_id, so the workflow can proceed only after a human response.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "conversation_id": { "type": "string" }
+        },
+        "required": ["conversation_id"]
+      }
+    },
+    {
+      "name": "teams_get_free_text_reply",
+      "description": "Retrieve a free-text natural-language reply from a planner in an onboarded channel or direct message thread, for natural-language re-planning intent parsing.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "conversation_id": { "type": "string" }
+        },
+        "required": ["conversation_id"]
+      }
+    }
+  ]
+}

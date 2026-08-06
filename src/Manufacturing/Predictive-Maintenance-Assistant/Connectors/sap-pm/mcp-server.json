@@ -1,0 +1,6 @@
+{
+  "type": "url",
+  "url": "https://mcp.internal.company.com/sap-pm",
+  "name": "sap-pm",
+  "authorization_token": "${SAP_PM_MCP_TOKEN}"
+}

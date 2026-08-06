@@ -1,0 +1,60 @@
+{
+  "tools": [
+    {
+      "name": "sharepoint_search_documents",
+      "description": "Full-text/semantic search over designated SharePoint sites for SOPs, OEM manuals, and RCA reports matching a query, equipment type, or document library scope.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "query": { "type": "string" },
+          "site": { "type": "string" },
+          "library": { "type": "string", "enum": ["SOP Library", "OEM Manuals", "RCA Reports"] },
+          "equipment_type": { "type": "string" }
+        },
+        "required": ["query"]
+      }
+    },
+    {
+      "name": "sharepoint_vector_search",
+      "description": "Query the RAG vector index of embedded SOPs and historical RCA reports for the top-N nearest neighbors to a failure signature or symptom description.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "query_text": { "type": "string" },
+          "top_n": { "type": "integer", "default": 5 },
+          "similarity_threshold": { "type": "number", "default": 0.70 }
+        },
+        "required": ["query_text"]
+      }
+    },
+    {
+      "name": "sharepoint_get_document",
+      "description": "Retrieve a specific document's content and metadata (title, version, effective date, section references) by its SharePoint URL or document ID.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "document_url": { "type": "string" },
+          "document_id": { "type": "string" }
+        }
+      }
+    },
+    {
+      "name": "sharepoint_publish_rca_report",
+      "description": "Upload a finalized RCA report document into the 'AI-Generated RCA Reports' subfolder, tagged with IncidentID, Equipment, and RootCauseCategory metadata. Requires human (maintenance engineer) approval prior to invocation; must not be called to publish an unapproved draft.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "site": { "type": "string" },
+          "folder_path": { "type": "string", "default": "/RCA Reports/AI-Generated/" },
+          "file_name": { "type": "string" },
+          "content_markdown": { "type": "string" },
+          "incident_id": { "type": "string" },
+          "equipment": { "type": "string" },
+          "root_cause_category": { "type": "string" },
+          "approved_by": { "type": "string" }
+        },
+        "required": ["file_name", "content_markdown", "incident_id", "equipment", "approved_by"]
+      }
+    }
+  ]
+}

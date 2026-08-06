@@ -1,0 +1,31 @@
+incident_id,equipment_id,reported_at,breakdown_flag,downtime_hours,description
+INC-2026-0203-01,20003310,2026-02-03T06:45:00Z,True,1.2,Conveyor CV-210 belt tracking failure caused misalignment trip; belt walked off idler roller.
+INC-2026-0211-01,30005544,2026-02-11T14:20:00Z,False,0.3,CNC MC-05 spindle overload warning; operator reset, no downtime beyond changeover.
+INC-2026-0215-01,10004522,2026-02-15T09:05:00Z,True,3.8,Pump P-302 bearing failure; excessive vibration and bearing overheating observed prior to trip. Bearing replaced under warranty.
+INC-2026-0222-01,40007788,2026-02-22T02:10:00Z,True,2.1,Robotic welder RW-12 axis 3 servo fault; motion controller reported overcurrent.
+INC-2026-0304-01,50009012,2026-03-04T11:30:00Z,True,1.5,Air Compressor AC-02 high discharge temperature trip; suspected clogged intercooler.
+INC-2026-0311-01,20003311,2026-03-11T22:40:00Z,False,0.4,Conveyor CV-211 minor jam cleared by operator, no notification required.
+INC-2026-0312-01,10004521,2026-03-12T05:55:00Z,True,2.6,Pump P-301 mechanical seal leak detected; unplanned stop for seal replacement.
+INC-2026-0318-01,30005545,2026-03-18T16:15:00Z,True,1.9,CNC MC-06 tool changer jam; damaged tool holder required manual clearing.
+INC-2026-0329-01,10004522,2026-03-29T03:20:00Z,True,4.2,Pump P-302 repeat bearing failure; vibration trend showed gradual rise over prior 6 hours before trip. Root cause traced to lubrication schedule gap.
+INC-2026-0406-01,40007788,2026-04-06T13:00:00Z,False,0.5,Robotic welder RW-12 wire feed stall, operator cleared.
+INC-2026-0414-01,20003310,2026-04-14T08:50:00Z,True,1.3,Conveyor CV-210 drive motor overload trip; suspected debris in gearbox.
+INC-2026-0421-01,50009012,2026-04-21T19:05:00Z,False,0.2,AC-02 momentary discharge pressure dip, auto-recovered.
+INC-2026-0430-01,30005544,2026-04-30T10:40:00Z,True,2.4,CNC MC-05 coolant pump failure caused spindle thermal alarm.
+INC-2026-0507-01,10004521,2026-05-07T01:15:00Z,True,3.1,Pump P-301 high vibration trip; bearing housing temperature elevated. Bearing inspected and re-greased; no replacement performed.
+INC-2026-0519-01,40007788,2026-05-19T15:30:00Z,True,1.7,Robotic welder RW-12 gas shielding fault caused weld quality hold and line stop.
+INC-2026-0523-01,20003311,2026-05-23T09:10:00Z,True,2.0,Conveyor CV-211 belt splice failure; belt torn requiring splice repair.
+INC-2026-0530-01,30005545,2026-05-30T12:25:00Z,False,0.6,CNC MC-06 minor axis calibration alarm, operator reset.
+INC-2026-0602-01,50009012,2026-06-02T04:50:00Z,True,1.1,AC-02 drive belt failure on sheave; compressor auto-stopped on low discharge pressure.
+INC-2026-0613-01,10004522,2026-06-13T22:05:00Z,True,3.6,Pump P-302 bearing failure, third occurrence in 4 months; vibration trend matched two prior events.
+INC-2026-0627-01,20003310,2026-06-27T17:40:00Z,False,0.3,CV-210 photo-eye sensor fault, sensor cleaned and reset.
+INC-2026-0630-01,30005544,2026-06-30T02:15:00Z,True,2.8,CNC MC-05 spindle bearing noise escalation led to unplanned stop for inspection.
+INC-2026-0705-01,40007788,2026-07-05T10:00:00Z,False,0.4,RW-12 weld program fault, operator restarted cycle.
+INC-2026-0716-01,10004521,2026-07-16T06:30:00Z,True,1.4,Pump P-301 minor seal weep; precautionary stop for inspection, no failure confirmed.
+INC-2026-0721-01,20003311,2026-07-21T13:55:00Z,True,1.8,Conveyor CV-211 idler roller bearing seizure caused belt drag and trip.
+INC-2026-0729-01,50009012,2026-07-29T20:30:00Z,False,0.3,AC-02 high humidity alarm, auto-drain cycle triggered, no stop.
+INC-2026-0801-01,30005545,2026-08-01T09:15:00Z,True,2.2,CNC MC-06 axis drive fault; servo amplifier replaced.
+INC-2026-0802-01,40007788,2026-08-02T16:45:00Z,False,0.5,RW-12 minor calibration drift, recalibrated.
+INC-2026-0804-01,10004521,2026-08-04T03:15:00Z,True,4.55,Pump P-301 tripped on high vibration interlock (12.4 mm/s) after gradual vibration rise from baseline over prior 7 hours; bearing housing temperature peaked at 95.4C. Suspected bearing failure due to lubrication starvation. Bearing and lubrication system inspected during repair.
+INC-2026-0804-02,30005544,2026-08-04T11:20:00Z,False,0.3,CNC MC-05 minor coolant low-level alarm, topped up, no stop.
+INC-2026-0804-03,20003310,2026-08-04T14:05:00Z,False,0.4,CV-210 tracking sensor false trip, reset by operator.

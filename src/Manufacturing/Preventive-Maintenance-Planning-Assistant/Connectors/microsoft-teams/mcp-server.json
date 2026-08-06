@@ -1,0 +1,6 @@
+{
+  "type": "url",
+  "url": "https://mcp.internal.company.com/microsoft-teams",
+  "name": "microsoft-teams",
+  "authorization_token": "${MS_TEAMS_MCP_TOKEN}"
+}

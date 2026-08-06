@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "sap-mm": {
+      "type": "url",
+      "url": "https://mcp.internal.company.com/sap-mm",
+      "authorization_token": "${SAP_MM_MCP_TOKEN}"
+    },
+    "inventory-database": {
+      "type": "url",
+      "url": "https://mcp.internal.company.com/inventory-database",
+      "authorization_token": "${INVENTORY_DATABASE_MCP_TOKEN}"
+    },
+    "erp": {
+      "type": "url",
+      "url": "https://mcp.internal.company.com/erp",
+      "authorization_token": "${ERP_MCP_TOKEN}"
+    },
+    "supplier-portal": {
+      "type": "url",
+      "url": "https://mcp.internal.company.com/supplier-portal",
+      "authorization_token": "${SUPPLIER_PORTAL_MCP_TOKEN}"
+    }
+  }
+}

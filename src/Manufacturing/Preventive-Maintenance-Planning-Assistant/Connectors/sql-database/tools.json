@@ -1,0 +1,68 @@
+{
+  "tools": [
+    {
+      "name": "sql_query_dim_equipment",
+      "description": "Run a parameterized read query against dim_equipment (equipment master synced from SAP PM, extended with run_hours_total, oem_service_interval_hours, last_service_date) using the read-only svc_ai_readonly account. Used by the Maintenance Scheduler skill to build due-list candidates.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "equipment_id": { "type": "string" },
+          "line": { "type": "string" },
+          "criticality": { "type": "string" }
+        }
+      }
+    },
+    {
+      "name": "sql_query_technician_availability",
+      "description": "Run a parameterized read query against dim_technician_availability (staged from HR roster + Outlook Calendar free/busy sync) using the read-only svc_ai_readonly account. Used by the Resource Planner skill to filter candidate technicians by certification, shift, and available dates.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "skill_cert": { "type": "string" },
+          "available_date": { "type": "string", "format": "date" }
+        }
+      }
+    },
+    {
+      "name": "sql_query_maintenance_history",
+      "description": "Run a parameterized read query against fact_maintenance_history (consolidated work order/notification history, extended with plan_id, planned_date, completed_date, status, variance_days) using the read-only svc_ai_readonly account. Used for soft-constraint learning and schedule-compliance KPI reporting.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "equipment_id": { "type": "string" },
+          "line": { "type": "string" },
+          "since_date": { "type": "string", "format": "date" }
+        }
+      }
+    },
+    {
+      "name": "sql_write_ai_recommendation",
+      "description": "Insert a proposed schedule, resource assignment, or re-optimization diff into fact_ai_recommendations using the write-scoped svc_ai_writer account, tagged with model_version, agent_id, and generated_at. This is the only table (besides the audit log) any skill in this use case writes to; no skill has or requires write access to source-of-record tables.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "plan_id": { "type": "string" },
+          "recommendation_type": { "type": "string", "enum": ["schedule", "assignment", "reoptimization_diff"] },
+          "payload": { "type": "object" },
+          "model_version": { "type": "string" },
+          "agent_id": { "type": "string" }
+        },
+        "required": ["plan_id", "recommendation_type", "payload", "model_version", "agent_id"]
+      }
+    },
+    {
+      "name": "sql_write_audit_log",
+      "description": "Insert an audit record (actor, timestamp, payload hash, triggering event ID) for a schedule proposal, approval/rejection, override, or write-back, using the write-scoped svc_ai_writer account.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "actor": { "type": "string" },
+          "action": { "type": "string" },
+          "payload_hash": { "type": "string" },
+          "triggering_event_id": { "type": "string" }
+        },
+        "required": ["actor", "action", "payload_hash"]
+      }
+    }
+  ]
+}

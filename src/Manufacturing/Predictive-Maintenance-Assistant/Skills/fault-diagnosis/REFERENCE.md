@@ -1,0 +1,3 @@
+# Reference: Fault Diagnosis — Reusability Notes
+
+The pattern-matching approach (anomaly signature -> historical fault-signature library -> ranked hypothesis) is directly reusable by **Quality** for correlating in-line process-parameter deviations with historical non-conformance root causes, and by **EHS** for correlating environmental/safety sensor anomalies (gas concentration, temperature excursions) with historical incident categories. The core logic — similarity-matching a live multivariate signal against a curated historical library — is domain-agnostic; only the fault-signature library and equipment taxonomy need to be swapped per department.

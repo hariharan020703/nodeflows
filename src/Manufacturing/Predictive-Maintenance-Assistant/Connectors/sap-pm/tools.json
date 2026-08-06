@@ -1,0 +1,99 @@
+{
+  "tools": [
+    {
+      "name": "sap_pm_get_equipment",
+      "description": "Retrieve SAP PM equipment master data (description, functional location, object type, manufacturer, serial number, warranty dates) by equipment ID or functional location.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "equipment_id": { "type": "string", "description": "SAP PM equipment number, e.g. '10004521'." },
+          "functional_location": { "type": "string", "description": "SAP PM functional location code, e.g. 'PLANT-A-LINE3-PUMP01'." }
+        }
+      }
+    },
+    {
+      "name": "sap_pm_get_breakdown_history",
+      "description": "Retrieve historical breakdown/maintenance order records for an equipment, including MTBF, MTTR, downtime hours, and cost.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "equipment_id": { "type": "string" },
+          "start_date": { "type": "string", "format": "date", "description": "Start of the lookback window (ISO-8601 date)." },
+          "end_date": { "type": "string", "format": "date" }
+        },
+        "required": ["equipment_id"]
+      }
+    },
+    {
+      "name": "sap_pm_get_maintenance_plan",
+      "description": "Retrieve the existing preventive maintenance plan and planned orders (IP10 plans, IW3x planned orders) for an equipment or functional location within a date window, used to detect scheduling conflicts.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "equipment_id": { "type": "string" },
+          "functional_location": { "type": "string" },
+          "window_start": { "type": "string", "format": "date" },
+          "window_end": { "type": "string", "format": "date" }
+        },
+        "required": ["window_start", "window_end"]
+      }
+    },
+    {
+      "name": "sap_pm_get_parts_stock_status",
+      "description": "Check SAP PM/MM spare-parts stock status for a part number, returning whether it is in stock, on order (with ETA), or unknown.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "part_number": { "type": "string" },
+          "plant": { "type": "string" }
+        },
+        "required": ["part_number"]
+      }
+    },
+    {
+      "name": "sap_pm_create_notification",
+      "description": "Stage a SAP PM maintenance notification (breakdown or observed issue) for creation. This is a write action: it returns a confirmation payload for human review and does NOT commit to SAP PM until an explicit human approval step confirms the draft, per the human-in-the-loop approval gate required for all SAP PM write-backs.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "equipment": { "type": "string" },
+          "functional_location": { "type": "string" },
+          "notification_type": { "type": "string", "enum": ["M1", "M2", "M3"] },
+          "short_text": { "type": "string" },
+          "long_text": { "type": "string" },
+          "malfunction_start_date": { "type": "string", "format": "date-time" },
+          "breakdown_indicator": { "type": "boolean" },
+          "priority": { "type": "string", "enum": ["1", "2", "3", "4"] },
+          "reported_by": { "type": "string" }
+        },
+        "required": ["equipment", "notification_type", "short_text"]
+      }
+    },
+    {
+      "name": "sap_pm_confirm_work_order_completion",
+      "description": "Stage a work order completion confirmation (downtime hours, parts/labor consumed, closing text) for write-back to SAP PM. This is a write action: it requires a logged explicit human approval action before the confirmation is committed to the live order record.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "order_no": { "type": "string" },
+          "downtime_hours": { "type": "number" },
+          "parts_consumed": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "part": { "type": "string" },
+                "qty": { "type": "number" },
+                "unit_cost": { "type": "number" }
+              }
+            }
+          },
+          "labor_hours": { "type": "number" },
+          "closing_text": { "type": "string" },
+          "idempotency_key": { "type": "string" }
+        },
+        "required": ["order_no", "idempotency_key"]
+      }
+    }
+  ]
+}

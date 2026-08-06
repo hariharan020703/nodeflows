@@ -1,0 +1,92 @@
+{
+  "tools": [
+    {
+      "name": "sap_pm_get_equipment",
+      "description": "Retrieve SAP PM equipment master data (description, functional location, object type, manufacturer, serial number, warranty dates) by equipment ID or a fuzzy equipment nickname/functional location string, so an unresolved technician reference can be matched to a canonical Equipment ID before a notification is drafted.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "equipment_id": { "type": "string", "description": "Canonical SAP PM Equipment ID, e.g. 10004555." },
+          "functional_location": { "type": "string", "description": "Functional location code, e.g. PLANT-A-LINE3-PUMP01." },
+          "search_text": { "type": "string", "description": "Free-text equipment nickname to fuzzy-match, e.g. 'Motor07 line5'." }
+        }
+      }
+    },
+    {
+      "name": "sap_pm_search_notifications_orders",
+      "description": "Query open and recent SAP PM maintenance notifications and work orders for a given equipment ID within a lookback window, used for duplicate-submission detection before drafting a new notification and for shift-end order-status aggregation.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "equipment_id": { "type": "string" },
+          "plant": { "type": "string" },
+          "lookback_hours": { "type": "integer", "default": 24 },
+          "status_filter": {
+            "type": "array",
+            "items": { "type": "string", "enum": ["Open", "In Progress", "Pending Parts", "Completed", "Cancelled"] }
+          }
+        },
+        "required": ["equipment_id"]
+      }
+    },
+    {
+      "name": "sap_pm_stage_notification",
+      "description": "Stage a draft SAP PM maintenance notification (breakdown or observed issue) for human review. This does NOT write to SAP PM — it returns a confirmation payload with a staging ID that must be explicitly approved via sap_pm_commit_write before any record is created, per the mandatory human-review gate in this use case's Technical Design.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "equipment": { "type": "string" },
+          "functional_location": { "type": "string" },
+          "notification_type": { "type": "string", "enum": ["M1", "M2", "M3"] },
+          "short_text": { "type": "string" },
+          "long_text": { "type": "string" },
+          "breakdown_indicator": { "type": "boolean" },
+          "priority": { "type": "string", "enum": ["1", "2", "3", "4"] },
+          "source_citations": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["equipment", "notification_type", "short_text"]
+      }
+    },
+    {
+      "name": "sap_pm_stage_work_order_confirmation",
+      "description": "Stage a completion confirmation (labor hours, parts consumed) against an existing SAP PM work order for human review. This does NOT write to SAP PM — it returns a staging ID that must be explicitly approved via sap_pm_commit_write before the confirmation is posted, per the mandatory human-review gate.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "order_id": { "type": "string" },
+          "labor_hours": { "type": "number" },
+          "parts_used": { "type": "array", "items": { "type": "string" } },
+          "status": { "type": "string", "enum": ["Completed", "Completed - Follow-up Required"] }
+        },
+        "required": ["order_id", "status"]
+      }
+    },
+    {
+      "name": "sap_pm_commit_write",
+      "description": "Commit a previously staged notification, work order, or completion confirmation to SAP PM via OData POST/PATCH with an idempotency key. Requires an explicit human approver identity; must never be called without a logged approval event tied to a specific reviewer (FR-8/FR-9). Writes an audit record (approver identity, timestamp, payload hash) on success.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "staging_id": { "type": "string" },
+          "approved_by": { "type": "string", "description": "Identity of the human reviewer who approved this write." },
+          "approval_timestamp": { "type": "string", "format": "date-time" },
+          "idempotency_key": { "type": "string" }
+        },
+        "required": ["staging_id", "approved_by", "approval_timestamp"]
+      }
+    },
+    {
+      "name": "sap_pm_get_breakdown_history",
+      "description": "Retrieve breakdown/downtime history (MTBF, MTTR, downtime hours, cost) for an equipment ID from the PM Info System, used sparingly to note recurring-failure context in a completion report's root-cause narrative.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "equipment_id": { "type": "string" },
+          "date_range_start": { "type": "string", "format": "date" },
+          "date_range_end": { "type": "string", "format": "date" }
+        },
+        "required": ["equipment_id"]
+      }
+    }
+  ]
+}

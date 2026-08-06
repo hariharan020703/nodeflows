@@ -1,0 +1,6 @@
+{
+  "type": "url",
+  "url": "https://mcp.internal.company.com/inventory-database",
+  "name": "inventory-database",
+  "authorization_token": "${INVENTORY_DATABASE_MCP_TOKEN}"
+}

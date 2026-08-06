@@ -1,0 +1,6 @@
+{
+  "type": "url",
+  "url": "https://mcp.internal.company.com/erp",
+  "name": "erp",
+  "authorization_token": "${ERP_MCP_TOKEN}"
+}

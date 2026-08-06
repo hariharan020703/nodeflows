@@ -1,0 +1,6 @@
+{
+  "type": "url",
+  "url": "https://mcp.internal.company.com/sharepoint",
+  "name": "sharepoint",
+  "authorization_token": "${SHAREPOINT_MCP_TOKEN}"
+}

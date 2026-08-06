@@ -1,0 +1,56 @@
+{
+  "tools": [
+    {
+      "name": "teams_post_adaptive_card",
+      "description": "Post an Adaptive Card (RCA summary, incident timeline, ranked root causes, draft corrective actions) to a designated Teams channel, with Approve / Edit-Add-Evidence / Reject actions and a tagged responsible engineer.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "channel": { "type": "string" },
+          "incident_id": { "type": "string" },
+          "card_body": { "type": "object", "description": "Adaptive Card body JSON" },
+          "tagged_engineer": { "type": "string" }
+        },
+        "required": ["channel", "incident_id", "card_body"]
+      }
+    },
+    {
+      "name": "teams_send_direct_message",
+      "description": "Send a 1:1 escalation direct message to an on-call technician, shift supervisor, or plant manager, e.g. for a Priority 1 breakdown exceeding the configured downtime threshold without an engineer response.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "recipient": { "type": "string" },
+          "message": { "type": "string" },
+          "incident_id": { "type": "string" }
+        },
+        "required": ["recipient", "message"]
+      }
+    },
+    {
+      "name": "teams_get_card_action",
+      "description": "Retrieve the latest interactive action (Approve, Edit / Add Evidence, Reject, or free-text reply) submitted against a previously posted Adaptive Card, correlated by conversationId/incident_id.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "incident_id": { "type": "string" },
+          "conversation_id": { "type": "string" }
+        },
+        "required": ["incident_id"]
+      }
+    },
+    {
+      "name": "teams_schedule_escalation_meeting",
+      "description": "Auto-schedule a Teams huddle/meeting for a critical breakdown escalation, when configured for Priority 1 incidents exceeding the downtime threshold.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "incident_id": { "type": "string" },
+          "attendees": { "type": "array", "items": { "type": "string" } },
+          "requested_time": { "type": "string" }
+        },
+        "required": ["incident_id", "attendees"]
+      }
+    }
+  ]
+}
